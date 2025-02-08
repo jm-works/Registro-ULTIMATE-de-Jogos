@@ -99,7 +99,3 @@ Gostaria de ajudar no desenvolvimento do projeto? Se sim, siga estes passos:
 3. Faça um commit: `git commit -m 'Minha nova ideia'`.
 4. Envie um Pull Request.
 
----
-
-## 📜 Licença
-Este projeto está licenciado sob **MIT**. Você pode usá-lo, modificá-lo e compartilhá-lo livremente.

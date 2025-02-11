@@ -17,7 +17,7 @@ Este programa tem como propósito catalogar jogos finalizados, inspirado na plan
 ### Requisitos
 Para rodar o software, é necessário ter **Python 3.x** instalado e as seguintes bibliotecas:
 ```sh
-pip install pandas numpy json datetime re openpyxl reportlab matplotlib pyautogui screeninfo pyperclip Pillow
+pip install pandas numpy openpyxl reportlab matplotlib pyautogui screeninfo pyperclip Pillow
 ```
 
 ### Como Executar

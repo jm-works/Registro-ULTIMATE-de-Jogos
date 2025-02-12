@@ -23,11 +23,11 @@ pip install pandas numpy openpyxl reportlab matplotlib pyautogui screeninfo pype
 ### Como Executar
 1. Clone o repositório:
    ```sh
-   git clone https://github.com/jm-works/Registro-de-Jogos-Zerados-.git
+   git clone https://github.com/jm-works/Registro-ULTIMATE-de-Jogos.git
    ```
 2. Acesse o diretório do projeto:
    ```sh
-   cd Registro-de-Jogos-Zerados-
+   cd Registro-ULTIMATE-de-Jogos
    ```
 3. Execute o programa:
    ```sh

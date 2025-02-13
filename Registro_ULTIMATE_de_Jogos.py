@@ -430,7 +430,7 @@ def atualizar_plataforma(event):
 
 def validar_numero(P):
     # Esta função permite entrada numérica e espaços
-    if P == "" or re.match("^[0-9\s]*$", P):
+    if P == "" or re.match(r"^[0-9\s]*$", P):
         return True
     else:
         return False

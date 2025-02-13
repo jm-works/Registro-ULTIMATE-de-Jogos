@@ -1,6 +1,4 @@
-# -------------------------------
 # IMPORTS
-# -------------------------------
 
 # Módulos do Tkinter
 import tkinter as tk
@@ -38,10 +36,7 @@ import matplotlib.pyplot as plt
 from PIL import Image, ImageTk
 
 
-# -------------------------------
 # FUNÇÕES DE MANIPULAÇÃO DE DADOS
-# -------------------------------
-
 
 def carregar_lista():   #Carregamento principal dos dados da lsita
 
@@ -78,7 +73,6 @@ def carregar_lista():   #Carregamento principal dos dados da lsita
         return []
     except json.decoder.JSONDecodeError:
         return []
-
 
 def validar_campos(    # Verificação de erros
     titulo, genero, plataforma, data_zeramento, tempo_jogado, nota, estado
@@ -125,7 +119,6 @@ def validar_campos(    # Verificação de erros
 
     # Tudo está válido
     return None
-
 
 def organizar_lista(metodo):
     global lista_jogos
@@ -177,7 +170,6 @@ def organizar_lista(metodo):
 
     atualizar_lista(lista_jogos)
 
-
 def abrir_menu_organizacao():
     janela_organizacao = tk.Toplevel(root)
     janela_organizacao.title("Organizar Jogos")
@@ -205,12 +197,10 @@ def abrir_menu_organizacao():
             command=lambda m=metodo: [organizar_lista(m), janela_organizacao.destroy()],
         ).pack(pady=5)
 
-
 def atualizar_entry():
     genero_entry.delete(0, tk.END)
     texto_digitado = genero_combobox.get()
     genero_entry.insert(0, texto_digitado)
-
 
 def limpar_filtros():
     global jogos_filtrados
@@ -218,7 +208,6 @@ def limpar_filtros():
     atualizar_lista(jogos_filtrados)
     if filtro_window:
         filtro_window.destroy()
-
 
 def limpar_campos():
     global nota_entry, titulo_entry, genero_entry, plataforma_entry, data_zeramento_entry, descricao_zeramento_entry, tempo_jogado_entry
@@ -243,7 +232,6 @@ def limpar_campos():
     plataforma_combobox.set("")
     forma_zeramento_combobox.set("")
 
-
 def formatar_tempo_jogado(event=None):
     texto = tempo_jogado_entry.get()
     # Remove caracteres não numéricos
@@ -260,7 +248,6 @@ def formatar_tempo_jogado(event=None):
     tempo_jogado_entry.delete(0, tk.END)
     tempo_jogado_entry.insert(0, texto)
 
-
 def formatar_data(entry):
     input_text = entry.get()
 
@@ -275,7 +262,6 @@ def formatar_data(entry):
         entry.delete(0, tk.END)
         entry.insert(0, formatted_text)
 
-
 def centralizar_janela(janela, largura, altura):
     janela.update_idletasks()
     largura_tela = janela.winfo_screenwidth()
@@ -283,7 +269,6 @@ def centralizar_janela(janela, largura, altura):
     x = (largura_tela - largura) // 2
     y = (altura_tela - altura) // 2
     janela.geometry(f"{largura}x{altura}+{x}+{y}")
-
 
 def formatar_data_zeramento(event):
     input_text = data_zeramento_entry.get()
@@ -314,7 +299,6 @@ def formatar_data_zeramento(event):
     data_zeramento_entry.delete(0, tk.END)
     data_zeramento_entry.insert(0, formatted_text)
 
-
 def is_valid_nota(nota):
     try:
         nota = float(nota)
@@ -322,13 +306,11 @@ def is_valid_nota(nota):
     except ValueError:
         return False
 
-
 def atualizar_data_zeramento(event):
     data_atual = datetime.now().strftime("%d/%m/%Y")
     data_zeramento_entry.delete(0, tk.END)
     data_zeramento_entry.insert(0, data_atual)
     formatar_data_zeramento(data_atual)
-
 
 def excluir_jogo():
     selecionado = lista_jogos_listbox.curselection()
@@ -354,7 +336,6 @@ def excluir_jogo():
             )
             if janela_edicao:
                 janela_edicao.destroy()
-
 
 def adicionar_jogo():
     # Capturar os valores dos campos
@@ -399,7 +380,6 @@ def adicionar_jogo():
     # Mensagem de sucesso
     messagebox.showinfo("Sucesso!", f"O jogo '{titulo}' foi adicionado com sucesso!")
 
-
 def atualizar_campos(event):
     estado = forma_zeramento_combobox.get()
     if estado in ["Planejo Jogar", "Desistência"]:
@@ -416,17 +396,14 @@ def atualizar_campos(event):
         nota_slider.config(state="normal")
         data_zeramento_entry.config(state="normal")
 
-
 def atualizar_genero(event):
     genero_entry.delete(0, tk.END)
     genero_selecionado = genero_combobox.get()
     genero_entry.insert(0, genero_selecionado)
 
-
 def atualizar_plataforma(event):
     plataforma_entry.delete(0, tk.END)
     plataforma_entry.insert(0, plataforma_var.get())
-
 
 def validar_numero(P):
     # Esta função permite entrada numérica e espaços
@@ -434,7 +411,6 @@ def validar_numero(P):
         return True
     else:
         return False
-
 
 def atualizar_lista(jogos=None):
     if jogos is None:
@@ -453,10 +429,7 @@ def atualizar_lista(jogos=None):
         lista_jogos_listbox.insert(tk.END, f"{idx}. {icone} {jogo['Título']}")
 
 
-# -------------------------------
 # FUNÇÕES DE IMPORTAÇÃO & EXPORTAÇÃO
-# -------------------------------
-
 
 def exportar_para_pdf():
     if not lista_jogos:
@@ -580,7 +553,6 @@ def exportar_para_pdf():
             f"Lista de jogos exportada para {nome_arquivo} (PDF) com sucesso!",
         )
 
-
 def exportar_para_excel():
     if not lista_jogos:
         messagebox.showerror(
@@ -666,7 +638,6 @@ def exportar_para_excel():
         messagebox.showinfo(
             "Sucesso", f"Lista de jogos exportada para {nome_arquivo} com sucesso!"
         )
-
 
 def importar_de_excel():
     nome_arquivo = filedialog.askopenfilename(filetypes=[("Arquivos Excel", "*.xlsx")])
@@ -770,7 +741,6 @@ def importar_de_excel():
     except Exception as e:
         messagebox.showerror("Erro", f"Ocorreu um erro inesperado: {e}")
 
-
 def salvar_lista():
     os.makedirs("saves", exist_ok=True)
     caminho_arquivo = os.path.join("saves", "jogos.json")
@@ -779,10 +749,8 @@ def salvar_lista():
     messagebox.showinfo("Salvar", "Lista de jogos salva com sucesso!")
 
 
-# -------------------------------
-# FUNÇÕES DE GERAÇÃO DE ESTATISTICAS
-# -------------------------------
 
+# FUNÇÕES DE GERAÇÃO DE ESTATISTICAS
 
 def criar_distribuicao_plataformas():
     if not lista_jogos:
@@ -834,7 +802,6 @@ def criar_distribuicao_plataformas():
 
     # Exibir o gráfico
     plt.show()
-
 
 def criar_media_notas_plataformas():
     if not lista_jogos:
@@ -888,7 +855,6 @@ def criar_media_notas_plataformas():
 
     # Exibir o gráfico
     plt.show()
-
 
 def criar_tempo_total_plataformas():
     if not lista_jogos:
@@ -956,7 +922,6 @@ def criar_tempo_total_plataformas():
     # Exibir o gráfico
     plt.show()
 
-
 def criar_grafico_jogos_por_ano():
     if not lista_jogos:
         messagebox.showinfo("Informação", "A lista de jogos está vazia.")
@@ -982,7 +947,6 @@ def criar_grafico_jogos_por_ano():
     plt.xticks(anos, rotation=45)
     plt.tight_layout()
     plt.show()
-
 
 def criar_grafico_comparativo_generos():
     if not lista_jogos:
@@ -1030,7 +994,6 @@ def criar_grafico_comparativo_generos():
     plt.grid(axis="y", linestyle="--", alpha=0.7)
 
     plt.show()
-
 
 def criar_analise_de_notas():
     if not lista_jogos:
@@ -1081,7 +1044,6 @@ def criar_analise_de_notas():
     # Exibir o gráfico
     plt.show()
 
-
 def contar_jogos_zerados_por_ano(ano):
     numero_jogos_zerados = 0
     for jogo in lista_jogos:
@@ -1091,7 +1053,6 @@ def contar_jogos_zerados_por_ano(ano):
             if data_zeramento.year == ano:
                 numero_jogos_zerados += 1
     return numero_jogos_zerados
-
 
 def calcular_tempo_total_jogado():
     total_minutos = 0
@@ -1117,11 +1078,9 @@ def calcular_tempo_total_jogado():
         f"Você perdeu {total_dias} dias, {total_horas} horas, {total_minutos} minutos, da sua vida com jogos",
     )
 
-
 def calcular_total_minutos(tempo_jogado):
     horas, minutos = map(int, tempo_jogado.split(":"))
     return horas * 60 + minutos
-
 
 def criar_grafico_generos():
     if not lista_jogos:
@@ -1162,7 +1121,6 @@ def criar_grafico_generos():
     plt.axis("equal")  # Garantir que o gráfico seja um círculo
     plt.show()
 
-
 def exibir_numero_jogos_zerados_por_ano():
     try:
         ano = askinteger("Jogos Zerados (Por ano)", "Digite o ano desejado:")
@@ -1174,7 +1132,6 @@ def exibir_numero_jogos_zerados_por_ano():
             )
     except ValueError:
         messagebox.showerror("Erro", "Ano inválido. Digite um ano válido.")
-
 
 def mostrar_jogos_longos_curto():
     # Filtrar apenas os jogos zerados com tempo jogado válido
@@ -1209,7 +1166,6 @@ def mostrar_jogos_longos_curto():
     except Exception as e:
         messagebox.showerror("Erro", f"Ocorreu um erro: {e}")
 
-
 def salvar_em_arquivo():
     nome_arquivo = filedialog.asksaveasfilename(
         defaultextension=".json", filetypes=[("Arquivos JSON", "*.json")]
@@ -1220,7 +1176,6 @@ def salvar_em_arquivo():
         messagebox.showinfo(
             "Salvar em Arquivo", f"Lista de jogos salva em {nome_arquivo} com sucesso!"
         )
-
 
 def carregar_de_arquivo():
     nome_arquivo = filedialog.askopenfilename(filetypes=[("Arquivos JSON", "*.json")])
@@ -1242,10 +1197,8 @@ def carregar_de_arquivo():
             )
 
 
-# -------------------------------
-# FUNÇÕES DE INTERFACE GRÁFICA (UI)
-# -------------------------------
 
+# FUNÇÕES DE INTERFACE GRÁFICA (UI)
 
 def estilizar_botao(
     botao,
@@ -1274,7 +1227,6 @@ def estilizar_botao(
     botao.bind("<Enter>", lambda e: botao.config(bg=efeito_hover))
     botao.bind("<Leave>", lambda e: botao.config(bg=cor_fundo))
 
-
 def abrir_menu_contexto(event):
     # Obter o índice do item clicado com o botão direito
     index = lista_jogos_listbox.nearest(event.y)
@@ -1301,7 +1253,6 @@ def abrir_menu_contexto(event):
     # Exibir o menu na posição do cursor
     menu.post(event.x_root, event.y_root)
 
-
 def pesquisar_no_google():
     # Obtenha o índice do jogo selecionado
     indice_selecionado = lista_jogos_listbox.curselection()[0]
@@ -1325,7 +1276,6 @@ def pesquisar_no_google():
 
     # Abrir o navegador padrão para realizar a pesquisa
     webbrowser.open(pesquisa_google_url)
-
 
 def editar_jogo():
     global filtro_window, janela_edicao, nota_entry
@@ -1508,7 +1458,6 @@ def editar_jogo():
         excluir_button.grid(row=9, column=0, columnspan=2, pady=10)
         estilizar_botao(excluir_button, cor_fundo="gray", largura=20, altura=1)
 
-
 def mostrar_jogos_filtrados():
     global filtro_window, filtro_titulo_entry, filtro_genero_entry, filtro_plataforma_combobox
     global filtro_min_nota_entry, filtro_max_nota_entry, filtro_ano_entry, filtro_metodo_combobox
@@ -1628,7 +1577,6 @@ def mostrar_jogos_filtrados():
     botao_filtro.grid(row=7, column=0, columnspan=2, pady=(10, 5))
 
     estilizar_botao(botao_filtro, cor_fundo="gray", largura=15, altura=1)
-
 
 def gerenciar_checklist():
     pasta_saves = "saves"
@@ -1837,7 +1785,6 @@ def gerenciar_checklist():
 
     atualizar_tarefas()
 
-
 def mostrar_informacoes(event):
     selecionado = lista_jogos_listbox.curselection()
     if selecionado:
@@ -1848,7 +1795,6 @@ def mostrar_informacoes(event):
 
             mensagem = f"Informações do Jogo:\n\nTítulo: {jogo_selecionado['Título']}\nGênero: {jogo_selecionado['Gênero']}\nPlataforma: {jogo_selecionado['Plataforma']}\nData de Zeramento: {jogo_selecionado['Data de Zeramento']}\nForma de Zeramento: {jogo_selecionado['Forma de Zeramento']}\nDescrição de Zeramento: {jogo_selecionado['Descrição de Zeramento']}\nTempo Jogado: {jogo_selecionado['Tempo Jogado']}\nNota: {jogo_selecionado['Nota']}"
             messagebox.showinfo("Informações do Jogo", mensagem)
-
 
 def copiar_nome():
     # Obtenha o índice do jogo selecionado
@@ -1866,7 +1812,6 @@ def copiar_nome():
     # Copie o título do jogo para a área de transferência
     pyperclip.copy(titulo_do_jogo)
 
-
 def selecionar_wallpaper():
     """Abre um seletor de arquivos para escolher a imagem e inicia a edição."""
     caminho_imagem = filedialog.askopenfilename(
@@ -1874,7 +1819,6 @@ def selecionar_wallpaper():
     )
     if caminho_imagem:
         editar_wallpaper(caminho_imagem)
-
 
 def editar_wallpaper(caminho_imagem):
     """Abre uma janela para recortar o wallpaper antes de salvar."""
@@ -2005,7 +1949,6 @@ def editar_wallpaper(caminho_imagem):
     )
     btn_confirmar.pack(pady=10)
 
-
 def salvar_wallpaper(imagem, largura, altura):
     """Salva a imagem cortada como wallpaper.png na pasta layout."""
     pasta_layout = "layout"
@@ -2020,7 +1963,6 @@ def salvar_wallpaper(imagem, largura, altura):
     # Atualizar a interface
     atualizar_wallpaper()
 
-
 def atualizar_wallpaper():
     caminho_wallpaper = os.path.join("layout", "wallpaper.png")
 
@@ -2031,7 +1973,6 @@ def atualizar_wallpaper():
         # Aplicar o wallpaper como fundo
         wallpaper_label.config(image=img_tk)
         wallpaper_label.image = img_tk
-
 
 def carregar_wallpaper():
     global wallpaper_tk
@@ -2045,7 +1986,6 @@ def carregar_wallpaper():
         # Aplicar o wallpaper como fundo
         wallpaper_label.config(image=wallpaper_tk)
         wallpaper_label.image = wallpaper_tk  # Evita descarte
-
 
 def carregar_background():
     global background_tk
@@ -2071,10 +2011,7 @@ def carregar_background():
         background_label.image = background_tk  # Evita descarte
 
 
-# -------------------------------
 # OUTRAS UTILIDADES
-# -------------------------------
-
 
 def show_error_message(message):
     error_window = tk.Toplevel(root)
@@ -2083,7 +2020,6 @@ def show_error_message(message):
     error_label.pack()
     ok_button = tk.Button(error_window, text="OK", command=error_window.destroy)
     ok_button.pack()
-
 
 def on_closing():
     resposta = messagebox.askyesnocancel(
@@ -2094,7 +2030,6 @@ def on_closing():
     elif resposta:
         salvar_lista()
     root.destroy()
-
 
 def criar_aba_resumo():
     resumo_window = tk.Toplevel(root)
@@ -2314,14 +2249,12 @@ def criar_aba_resumo():
         fg="white",
     ).pack(pady=10)
 
-
 def substituir_espaco_por_dois_pontos(event):
     tempo_jogado_entry_var.set(tempo_jogado_entry_var.get().replace(" ", ":"))
 
 
-# -------------------------------
 # PROGRAMA PRINCIPAL
-# -------------------------------
+
 
 # Inicializa a lista de jogos
 lista_jogos = carregar_lista()
@@ -2334,17 +2267,14 @@ janela_edicao = None
 jogos_filtrados = lista_jogos.copy()
 datetime_value = "algum_valor"
 
-
 root = tk.Tk()
 root.title("Registro ULTIMATE de jogos")
-
 
 icon_path = os.path.join(os.getcwd(), "layout", "icon.ico")
 if os.path.exists(icon_path):
     root.iconbitmap(icon_path)
 else:
     print(f"Ícone não encontrado no caminho: {icon_path}")
-
 
 root.protocol("WM_DELETE_WINDOW", on_closing)
 
@@ -2384,99 +2314,40 @@ genero_entry.grid(row=1, column=2, padx=10, pady=5, sticky=tk.W)
 
 genero_label = tk.Label(root, text="Gênero*:")
 genero_label.grid(row=1, column=0, padx=10, pady=5, sticky=tk.W)
-generos_disponiveis = [
+generos_disponiveis = sum([
     # RPG
-    "RPG",
-    "Action RPG",
-    "RPG de Turno",
-    "RPG Tático",
-    "JRPG",
-    "Action JRPG",
-    "JRPG de Turno",
-    "JRPG Tático",
-    "Dungeon Crawler",
-    "MMORPG",
-    "True RPG",
+    ["RPG", "Action RPG", "RPG de Turno", "RPG Tático", "JRPG", "Action JRPG", 
+     "JRPG de Turno", "JRPG Tático", "Dungeon Crawler", "MMORPG", "True RPG"],
     # Aventura
-    "Aventura",
-    "Aventura Gráfica",
-    "Point and Click",
-    "Metroidvania",
-    "Survival Horror",
+    ["Aventura", "Aventura Gráfica", "Point and Click", "Metroidvania", "Survival Horror"],
     # Ação
-    "Ação",
-    "Hack and Slash",
-    "Beat 'em Up",
-    "Stealth",
-    "Action-Adventure",
+    ["Ação", "Hack and Slash", "Beat 'em Up", "Stealth", "Action-Adventure"],
     # Estratégia
-    "Estratégia",
-    "RTS (Real-Time Strategy)",
-    "TBS (Turn-Based Strategy)",
-    "Tower Defense",
-    "4X (eXplore, eXpand, eXploit, eXterminate)",
+    ["Estratégia", "RTS (Real-Time Strategy)", "TBS (Turn-Based Strategy)", 
+     "Tower Defense", "4X (eXplore, eXpand, eXploit, eXterminate)"],
     # Simulação
-    "Simulação",
-    "Simulação de Vida",
-    "Simulação de Construção",
-    "Simulação de Negócios",
-    "Simulação de Voo",
-    "Simulação de Veículos",
-    "Simulação Social",
+    ["Simulação", "Simulação de Vida", "Simulação de Construção", "Simulação de Negócios",
+     "Simulação de Voo", "Simulação de Veículos", "Simulação Social"],
     # Esportes
-    "Esportes",
-    "Futebol",
-    "Basquete",
-    "Corrida",
-    "Golfe",
-    "Tênis",
-    "Esportes Radicais",
-    "Automobilismo",
-    "Futebol Americano",
+    ["Esportes", "Futebol", "Basquete", "Corrida", "Golfe", "Tênis", 
+     "Esportes Radicais", "Automobilismo", "Futebol Americano"],
     # Puzzle
-    "Puzzle",
-    "Quebra-Cabeças Lógicos",
-    "Match-3",
-    "Jogos de Palavras",
-    "Sokoban",
-    "Escape Room",
+    ["Puzzle", "Quebra-Cabeças Lógicos", "Match-3", "Jogos de Palavras", "Sokoban", "Escape Room"],
     # Luta
-    "Luta",
-    "2D Fighting",
-    "3D Fighting",
-    "Arena Fighting",
-    "Party Fighting",
-    "Beat 'em Up",
+    ["Luta", "2D Fighting", "3D Fighting", "Arena Fighting", "Party Fighting", "Beat 'em Up"],
     # Tiro
-    "Tiro",
-    "FPS (First-Person Shooter)",
-    "TPS (Third-Person Shooter)",
-    "Shoot 'em Up",
-    "Light Gun Shooter",
-    "Bullet Hell",
+    ["Tiro", "FPS (First-Person Shooter)", "TPS (Third-Person Shooter)", 
+     "Shoot 'em Up", "Light Gun Shooter", "Bullet Hell"],
     # Horror
-    "Horror",
-    "Survival Horror",
-    "Psychological Horror",
-    "Action Horror",
-    "VR Horror",
+    ["Horror", "Survival Horror", "Psychological Horror", "Action Horror", "VR Horror"],
     # Sandbox
-    "Sandbox",
-    "World Builder",
-    "Exploration",
-    "Open World",
-    "Criativo",
+    ["Sandbox", "World Builder", "Exploration", "Open World", "Criativo"],
     # Party Games
-    "Jogos de Festa",
-    "Minigames",
-    "Quiz",
-    "Jogos de Tabuleiro Adaptados",
-    # Outros Gêneros
-    "Educação",
-    "Treinamento",
-    "Documentário",
-    "Outro",
-]
+    ["Jogos de Festa", "Minigames", "Quiz", "Jogos de Tabuleiro Adaptados"],
+    # Outros
+    ["Educação", "Treinamento", "Documentário", "Outro"]
+], [])
+
 genero_var = tk.StringVar()
 genero_combobox = ttk.Combobox(
     root, textvariable=genero_var, values=generos_disponiveis, state="readonly"
@@ -2486,63 +2357,42 @@ genero_combobox.set("")
 genero_combobox.bind("<KeyRelease>", atualizar_entry)
 genero_combobox.bind("<<ComboboxSelected>>", atualizar_genero)
 
-plataformas_disponiveis = [
+plataformas_disponiveis = sum([
     # Atari
-    "Atari 2600",
-    "Atari 5200",
-    "Atari 7800",
+    ["Atari 2600", "Atari 5200", "Atari 7800"],
     # Nintendo
-    "NES (Nintendo Entertainment System)",
-    "SNES (Super Nintendo Entertainment System)",
-    "Nintendo 64",
-    "GameCube",
-    "Game Boy",
-    "Game Boy Color",
-    "Game Boy Advance",
-    "Nintendo DS",
-    "Nintendo Switch",
+    ["NES (Nintendo Entertainment System)", "SNES (Super Nintendo Entertainment System)", 
+     "Virtual Boy", "Nintendo 64", "GameCube", "Game Boy", "Game Boy Color", 
+     "Game Boy Advance", "Nintendo DS", "Nintendo Switch"],
     # Sega
-    "Sega Master System",
-    "Sega Genesis (Mega Drive)",
-    "Sega Saturn",
-    "Sega Dreamcast",
-    "Game Gear",
+    ["Sega Master System", "Sega Genesis (Mega Drive)", "Game Gear", "Sega Nomad", 
+     "Sega Saturn", "Sega Dreamcast"],
     # Sony
-    "PlayStation 1",
-    "PlayStation 2",
-    "PlayStation 3",
-    "PlayStation 4",
-    "PlayStation 5",
-    "PlayStation Portable",
+    ["PlayStation 1", "PlayStation 2", "PlayStation Portable", "PlayStation 3", 
+     "PlayStation Vita", "PlayStation 4", "PlayStation 5"],
     # Microsoft
-    "Xbox Clássico",
-    "Xbox 360",
-    "Xbox One",
-    "Xbox Series X|S",
+    ["Xbox Clássico", "Xbox 360", "Xbox One", "Xbox Series X|S"],
     # SNK
-    "Neo Geo",
-    "Neo Geo Pocket",
-    "Neo Geo Pocket Color",
+    ["Neo Geo", "Neo Geo Pocket", "Neo Geo Pocket Color", "Neo Geo X"],
     # NEC
-    "TurboGrafx-16 (PC Engine)",
-    "TurboGrafx-CD",
+    ["TurboGrafx-16 (PC Engine)", "TurboGrafx-CD"],
     # Mattel
-    "Intellivision",
+    ["Intellivision"],
     # Coleco
-    "ColecoVision",
+    ["ColecoVision"],
     # Commodore
-    "Commodore 64",
-    "Amiga",
+    ["Commodore 64", "Amiga"],
     # Sinclair
-    "ZX Spectrum",
+    ["ZX Spectrum"],
     # Panasonic/GoldStar
-    "3DO",
+    ["3DO"],
+    # Portáteis adicionais
+    ["Bandai WonderSwan", "Bandai WonderSwan Color"],
     # Modernos e genéricos
-    "PC",
-    "Mobile",
+    ["PC", "Mobile"],
     # Outros
-    "Outro",
-]
+    ["Outro"]
+], [])
 
 # Campo de entrada e label para plataforma
 plataforma_label = tk.Label(root, text="Plataforma*:")
@@ -2627,9 +2477,7 @@ scrollbar = tk.Scrollbar(list_frame, orient=tk.VERTICAL)
 scrollbar.config(command=lista_jogos_listbox.yview)
 scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-
 lista_jogos_listbox.config(yscrollcommand=scrollbar.set)
-
 
 lista_jogos_listbox.bind("<Double-Button-1>", mostrar_informacoes)
 lista_jogos_listbox.bind("<Button-3>", abrir_menu_contexto)
@@ -2638,7 +2486,6 @@ atualizar_lista()
 
 menu = tk.Menu(root)
 root.config(menu=menu)
-
 
 arquivo_menu = tk.Menu(menu, tearoff=0)
 menu.add_cascade(label="Arquivo", menu=arquivo_menu)
@@ -2652,11 +2499,9 @@ arquivo_menu.add_command(label="Alterar Wallpaper", command=selecionar_wallpaper
 arquivo_menu.add_separator()
 arquivo_menu.add_command(label="Sair", command=on_closing)
 
-
 editar_menu = tk.Menu(menu, tearoff=0)
 menu.add_cascade(label="Editar", menu=editar_menu)
 editar_menu.add_command(label="Editar Jogo", command=editar_jogo)
-
 
 filtro_menu = tk.Menu(menu, tearoff=0)
 menu.add_cascade(label="Filtro", menu=filtro_menu)

@@ -43,7 +43,7 @@ from PIL import Image, ImageTk
 # -------------------------------
 
 
-def carregar_lista():
+def carregar_lista():   #Carregamento principal dos dados da lsita
 
     caminho_arquivo = os.path.join("saves", "jogos.json")
     try:
@@ -71,7 +71,7 @@ def carregar_lista():
                 ),
             )
 
-            # Reunir jogos com e sem data, mantendo os sem data no final
+            # Reunir jogos com e sem data, mantendo os sem data no final dalista
             return jogos_com_data + jogos_sem_data
 
     except FileNotFoundError:
@@ -80,7 +80,7 @@ def carregar_lista():
         return []
 
 
-def validar_campos(
+def validar_campos(    # Verificação de erros
     titulo, genero, plataforma, data_zeramento, tempo_jogado, nota, estado
 ):
     # Validação do campo 'Título'
@@ -244,7 +244,7 @@ def limpar_campos():
     forma_zeramento_combobox.set("")
 
 
-def formatar_tempo_jogado():
+def formatar_tempo_jogado(event=None):
     texto = tempo_jogado_entry.get()
     # Remove caracteres não numéricos
     texto = "".join(filter(str.isdigit, texto))

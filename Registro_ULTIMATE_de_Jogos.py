@@ -2680,7 +2680,7 @@ plataformas_disponiveis = sum(
         # Panasonic/GoldStar
         ["3DO"],
         # Portáteis adicionais
-        ["Bandai WonderSwan", "Bandai WonderSwan Color"],
+        ["WonderSwan", "WonderSwan Color"],
         # Modernos e genéricos
         ["PC", "Mobile"],
         # Outros

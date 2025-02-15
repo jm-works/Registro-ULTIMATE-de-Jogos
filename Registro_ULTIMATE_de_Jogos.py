@@ -2638,10 +2638,13 @@ plataformas_disponiveis = sum(
             "Virtual Boy",
             "Nintendo 64",
             "GameCube",
+            "Nintendo Wii",
+            "Nintendo WiiU",
             "Game Boy",
             "Game Boy Color",
             "Game Boy Advance",
             "Nintendo DS",
+            "Nintendo 3DS/2DS",
             "Nintendo Switch",
         ],
         # Sega

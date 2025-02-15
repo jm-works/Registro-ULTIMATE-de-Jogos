@@ -6,7 +6,7 @@ Este programa tem como propósito catalogar jogos finalizados, inspirado na plan
 
 **Destaques:**
 - Cadastro completo de jogos, incluindo gênero, plataforma, tempo jogado e nota.
-- Organização simples e, com filtros para encontrar rapidamente qualquer jogo.
+- Organização simples, com filtros para encontrar rapidamente qualquer jogo.
 - Estatísticas e gráficos para visualizar seu desempenho ao longo do tempo.
 - Exportação e importação de dados para Excel e PDF.
 - Checklist de tarefas para acompanhar desafios dentro dos jogos.
@@ -57,9 +57,10 @@ O programa possui uma interface intuitiva, inspirada em menus clássicos de comp
 - **Clique com o botão direito** sobre um jogo para abrir um menu rápido:
   - Pesquisar no Google
   - Copiar nome do jogo
-  - Editar jogo
-  - Excluir jogo
-  - Exportar/Importar
+  - Organizar Lista
+  - Filtrar/Limpar Filtros
+  - Editar Jogo
+  - Excluir Jogo
 
 ---
 
@@ -71,24 +72,30 @@ O programa possui uma interface intuitiva, inspirada em menus clássicos de comp
 3. Clique em **"Adicionar Jogo"**.
 
 ### Editando e Excluindo Jogos
-- Para editar um jogo, use o menu rápido com o botão direito e clique em **"Editar"**.
-- Para excluir, use o menu rápido com o botão direito e clique em **"Excluir"**.
+- Para editar um jogo, use o menu rápido com o botão direito em cima da lista e clique em **"Editar"**.
+- Para excluir, use o menu rápido com o botão direito em cima da lista e clique em **"Excluir"**.
 
 ### Exportação e Importação de Dados
 - **Exportar** para PDF ou Excel.
 - **Importar** listas prontas de jogos.
 
+### Filtrando e Limpando Filtros
+
+- Para filtrar, use o menu rápido com o botão direito em cima da lista e clique em **"Filtrar"**.
+- Para limpar filtro, use o menu rápido com o botão direito em cima da lista e clique em **"Limpar Filtros"**.
+- **Obs:** Use as abas superiores para limpar o filtro caso não tenha nenhum jogo aparecendo na lista
+
 ### Estatísticas e Relatórios
-- No menu "Estatísticas", veja gráficos detalhados sobre:
+- No menu **"Estatísticas"**, veja gráficos detalhados sobre:
   - Jogos zerados por ano.
   - Média de notas por plataforma.
   - Distribuição do tempo jogado.
 
 ### Checklist de Missões
-- No menu "Minhas Tarefas", acompanhe desafios dentro dos jogos.
+- No menu **"Minhas Tarefas"**, acompanhe desafios dentro dos jogos.
 
 ### Resumo da sua Jornada
-- No menu "Resumo da sua Jornada", veja um relatório detalhado com todos os seus jogos registrados.
+- No menu **"Resumo da sua Jornada"**, veja um relatório detalhado com todos os seus jogos registrados.
 
 ---
 
@@ -99,3 +106,8 @@ Gostaria de ajudar no desenvolvimento do projeto? Se sim, siga estes passos:
 3. Faça um commit: `git commit -m 'Minha nova ideia'`.
 4. Envie um Pull Request.
 
+---
+
+Projeto #01
+
+JM | José Matheus

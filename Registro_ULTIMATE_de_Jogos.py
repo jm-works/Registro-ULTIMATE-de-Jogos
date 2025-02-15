@@ -2597,7 +2597,7 @@ generos_disponiveis = sum(
             "FPS (First-Person Shooter)",
             "TPS (Third-Person Shooter)",
             "Shoot 'em Up",
-            "Light Gun Shooter",
+            "Boomer Shooter",
             "Bullet Hell",
         ],
         # Horror

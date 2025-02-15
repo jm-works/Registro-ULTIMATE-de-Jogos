@@ -28,6 +28,8 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
 
 # Criação de Gráficos
 import matplotlib.pyplot as plt
@@ -38,8 +40,9 @@ from PIL import Image, ImageTk
 
 # FUNÇÕES DE MANIPULAÇÃO DE DADOS
 
-def carregar_lista():   #Carregamento principal dos dados da lsita
 
+# Modulo principal do codigo
+def carregar_lista():
     caminho_arquivo = os.path.join("saves", "jogos.json")
     try:
         with open(caminho_arquivo, "r", encoding="utf-8") as arquivo:
@@ -58,7 +61,6 @@ def carregar_lista():   #Carregamento principal dos dados da lsita
                 if not jogo.get("Data de Zeramento")
                 or not re.match(r"^\d{2}/\d{2}/\d{4}$", jogo["Data de Zeramento"])
             ]
-
             jogos_com_data = sorted(
                 jogos_com_data,
                 key=lambda jogo: datetime.strptime(
@@ -66,15 +68,18 @@ def carregar_lista():   #Carregamento principal dos dados da lsita
                 ),
             )
 
-            # Reunir jogos com e sem data, mantendo os sem data no final dalista
+            # Reunir jogos com e sem data, mantendo os sem data no final da lista
             return jogos_com_data + jogos_sem_data
 
     except FileNotFoundError:
         return []
-    except json.decoder.JSONDecodeError:
+    except json.JSONDecodeError:
+        messagebox.showerror("Erro", "O arquivo de jogos está corrompido ou inválido.")
         return []
 
-def validar_campos(    # Verificação de erros
+
+# Verificação de preenchimento das tabelas
+def validar_campos(
     titulo, genero, plataforma, data_zeramento, tempo_jogado, nota, estado
 ):
     # Validação do campo 'Título'
@@ -120,6 +125,8 @@ def validar_campos(    # Verificação de erros
     # Tudo está válido
     return None
 
+
+# Filtragem de conteudo
 def organizar_lista(metodo):
     global lista_jogos
 
@@ -170,6 +177,8 @@ def organizar_lista(metodo):
 
     atualizar_lista(lista_jogos)
 
+
+# Organização da lista (Puramente Visual)
 def abrir_menu_organizacao():
     janela_organizacao = tk.Toplevel(root)
     janela_organizacao.title("Organizar Jogos")
@@ -197,11 +206,15 @@ def abrir_menu_organizacao():
             command=lambda m=metodo: [organizar_lista(m), janela_organizacao.destroy()],
         ).pack(pady=5)
 
+
+# Confirma entrada na combobox genero
 def atualizar_entry():
     genero_entry.delete(0, tk.END)
     texto_digitado = genero_combobox.get()
     genero_entry.insert(0, texto_digitado)
 
+
+# Auto-explitivo
 def limpar_filtros():
     global jogos_filtrados
     jogos_filtrados = lista_jogos.copy()
@@ -209,6 +222,8 @@ def limpar_filtros():
     if filtro_window:
         filtro_window.destroy()
 
+
+# Comando para apagar o que foi escrito nas label iniciais
 def limpar_campos():
     global nota_entry, titulo_entry, genero_entry, plataforma_entry, data_zeramento_entry, descricao_zeramento_entry, tempo_jogado_entry
 
@@ -232,6 +247,8 @@ def limpar_campos():
     plataforma_combobox.set("")
     forma_zeramento_combobox.set("")
 
+
+# Impedi o usuario fazer besteira na formatação do tempo
 def formatar_tempo_jogado(event=None):
     texto = tempo_jogado_entry.get()
     # Remove caracteres não numéricos
@@ -248,6 +265,8 @@ def formatar_tempo_jogado(event=None):
     tempo_jogado_entry.delete(0, tk.END)
     tempo_jogado_entry.insert(0, texto)
 
+
+# Impedi o usuario fazer besteira na formatação da data
 def formatar_data(entry):
     input_text = entry.get()
 
@@ -262,6 +281,8 @@ def formatar_data(entry):
         entry.delete(0, tk.END)
         entry.insert(0, formatted_text)
 
+
+# Ajustar a janela pelo tamanho do monitor do usuario
 def centralizar_janela(janela, largura, altura):
     janela.update_idletasks()
     largura_tela = janela.winfo_screenwidth()
@@ -270,6 +291,8 @@ def centralizar_janela(janela, largura, altura):
     y = (altura_tela - altura) // 2
     janela.geometry(f"{largura}x{altura}+{x}+{y}")
 
+
+# Impedi o usuario fazer besteira na formatação da data de zeramento
 def formatar_data_zeramento(event):
     input_text = data_zeramento_entry.get()
 
@@ -299,6 +322,8 @@ def formatar_data_zeramento(event):
     data_zeramento_entry.delete(0, tk.END)
     data_zeramento_entry.insert(0, formatted_text)
 
+
+# Verificação da nota dada aos jogos
 def is_valid_nota(nota):
     try:
         nota = float(nota)
@@ -306,12 +331,16 @@ def is_valid_nota(nota):
     except ValueError:
         return False
 
+
+# Confirmar a adição da data de zeramento
 def atualizar_data_zeramento(event):
     data_atual = datetime.now().strftime("%d/%m/%Y")
     data_zeramento_entry.delete(0, tk.END)
     data_zeramento_entry.insert(0, data_atual)
     formatar_data_zeramento(data_atual)
 
+
+# Auto-explicativo
 def excluir_jogo():
     selecionado = lista_jogos_listbox.curselection()
     if not selecionado:
@@ -337,6 +366,8 @@ def excluir_jogo():
             if janela_edicao:
                 janela_edicao.destroy()
 
+
+# Auto-explicativo
 def adicionar_jogo():
     # Capturar os valores dos campos
     titulo = titulo_entry.get()
@@ -380,11 +411,13 @@ def adicionar_jogo():
     # Mensagem de sucesso
     messagebox.showinfo("Sucesso!", f"O jogo '{titulo}' foi adicionado com sucesso!")
 
+
+# O usuario só pode adicionar data, nota e tempo naquilo que ele zerou
 def atualizar_campos(event):
     estado = forma_zeramento_combobox.get()
     if estado in ["Planejo Jogar", "Desistência"]:
         # Desativar campos
-        tempo_jogado_entry_var.set("")  # Use set() para limpar o campo
+        tempo_jogado_entry_var.set("")
         tempo_jogado_entry.config(state="disabled")
         nota_slider.set(1)
         nota_slider.config(state="disabled")
@@ -396,15 +429,21 @@ def atualizar_campos(event):
         nota_slider.config(state="normal")
         data_zeramento_entry.config(state="normal")
 
+
+# Ajuda na combobox do genero
 def atualizar_genero(event):
     genero_entry.delete(0, tk.END)
     genero_selecionado = genero_combobox.get()
     genero_entry.insert(0, genero_selecionado)
 
+
+# Adiciona a entry na plataforma
 def atualizar_plataforma(event):
     plataforma_entry.delete(0, tk.END)
     plataforma_entry.insert(0, plataforma_var.get())
 
+
+# Verificação de validade da numeração
 def validar_numero(P):
     # Esta função permite entrada numérica e espaços
     if P == "" or re.match(r"^[0-9\s]*$", P):
@@ -412,6 +451,8 @@ def validar_numero(P):
     else:
         return False
 
+
+# Formatação visual da lista
 def atualizar_lista(jogos=None):
     if jogos is None:
         jogos = lista_jogos
@@ -431,6 +472,8 @@ def atualizar_lista(jogos=None):
 
 # FUNÇÕES DE IMPORTAÇÃO & EXPORTAÇÃO
 
+
+# Auto-explicativo
 def exportar_para_pdf():
     if not lista_jogos:
         messagebox.showerror(
@@ -493,11 +536,16 @@ def exportar_para_pdf():
             for j in range(len(data[0]))
         ]
 
-        # Definir um estilo de parágrafo para o conteúdo da célula
+        # Definir um estilo de parágrafo para o conteúdo da
+        font_path = os.path.join(
+            os.path.dirname(__file__), "font", "Mplus1p-Regular.ttf"
+        )
+        pdfmetrics.registerFont(TTFont("Mplus1p", font_path))
         styles = getSampleStyleSheet()
         cell_style = ParagraphStyle(name="TableCell")
         cell_style.alignment = 1  # Centralizar o texto na célula
-        cell_style.leading = 12  # Espaçamento entre linhas
+        cell_style.leading = 12
+        cell_style.fontName = "Mplus1p"
 
         # Adicionar a tabela de dados com cores por estado
         table_data = []
@@ -516,7 +564,7 @@ def exportar_para_pdf():
                 ("BACKGROUND", (0, 0), (-1, 0), colors.grey),  # Cabeçalho
                 ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTNAME", (0, 0), (-1, 0), "Mplus1p"),
                 ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
                 ("GRID", (0, 0), (-1, -1), 1, colors.black),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),  # Centralizar verticalmente
@@ -553,6 +601,8 @@ def exportar_para_pdf():
             f"Lista de jogos exportada para {nome_arquivo} (PDF) com sucesso!",
         )
 
+
+# Auto-explicativo
 def exportar_para_excel():
     if not lista_jogos:
         messagebox.showerror(
@@ -639,16 +689,15 @@ def exportar_para_excel():
             "Sucesso", f"Lista de jogos exportada para {nome_arquivo} com sucesso!"
         )
 
+
+# Auto-explicativo
 def importar_de_excel():
     nome_arquivo = filedialog.askopenfilename(filetypes=[("Arquivos Excel", "*.xlsx")])
     if not nome_arquivo:
         return  # Cancelamento do diálogo
 
     try:
-        # Ler o arquivo Excel em um DataFrame
         df = pd.read_excel(nome_arquivo)
-
-        # Verificar se as colunas necessárias estão presentes
         colunas_esperadas = [
             "Título",
             "Gênero",
@@ -666,13 +715,8 @@ def importar_de_excel():
                 )
                 return
 
-        # Substituir valores NaN por strings vazias
         df = df.fillna("")
-
-        # Converter o DataFrame em uma lista de dicionários
         lista_importada = df.to_dict(orient="records")
-
-        # Criar um conjunto de identificadores únicos (título + plataforma + estado)
         jogos_existentes = {
             (
                 jogo["Título"].strip().lower(),
@@ -682,76 +726,66 @@ def importar_de_excel():
             for jogo in lista_jogos
         }
 
-        # Adicionar todos os jogos (incluindo validação de campos obrigatórios)
         jogos_adicionados = 0
+        jogos_repetidos = 0
         for jogo in lista_importada:
-            # Criar um identificador único para o jogo
             identificador = (
                 jogo["Título"].strip().lower(),
                 jogo["Plataforma"].strip().lower(),
                 jogo["Forma de Zeramento"].strip().lower(),
             )
-
-            # Verificar título vazio ou inválido
             if not jogo["Título"].strip():
-                print(f"Jogo ignorado por título vazio: {jogo}")
                 continue  # Ignorar jogos sem título
-
-            # Verificar se o jogo já existe na lista
             if identificador in jogos_existentes:
-                print(f"Jogo ignorado por ser duplicado: {jogo}")
+                jogos_repetidos += 1
                 continue
 
-            # Validar e formatar a nota
             try:
                 nota = float(jogo["Nota"])
-                if 1 <= nota <= 10:
-                    jogo["Nota"] = nota
-                else:
-                    jogo["Nota"] = ""  # Nota inválida
+                jogo["Nota"] = nota if 1 <= nota <= 10 else ""
             except (ValueError, TypeError):
-                jogo["Nota"] = ""  # Nota ausente ou inválida
+                jogo["Nota"] = ""
 
-            # Adicionar o jogo à lista
             lista_jogos.append(jogo)
-            # Atualizar o conjunto de identificadores
             jogos_existentes.add(identificador)
             jogos_adicionados += 1
 
-        # Atualizar a lista exibida
         atualizar_lista()
         limpar_filtros()
 
-        # Mensagem de sucesso
         if jogos_adicionados > 0:
             messagebox.showinfo(
                 "Sucesso",
-                f"{jogos_adicionados} jogos foram importados de {nome_arquivo} com sucesso!",
+                f"{jogos_adicionados} novo{'s' if jogos_adicionados > 1 else ''} jogo{'s' if jogos_adicionados > 1 else ''} importado{'s' if jogos_adicionados > 1 else ''} de {nome_arquivo} com sucesso!\n"
+                f"{jogos_repetidos} jogo{'s' if jogos_repetidos != 1 else ''} já existia{'m' if jogos_repetidos != 1 else ''} na lista.",
             )
         else:
             messagebox.showinfo(
                 "Informação",
-                "Nenhum novo jogo foi importado. Todos os jogos já existem na lista.",
+                f"Nenhum novo jogo foi importado. {jogos_repetidos} jogo{'s' if jogos_repetidos != 1 else ''} já existia{'m' if jogos_repetidos != 1 else ''} na lista.",
             )
 
     except FileNotFoundError:
         messagebox.showerror("Erro", "Arquivo não encontrado.")
     except ValueError as e:
-        messagebox.showerror("Erro", f"Erro ao processar o arquivo Excel: {e}")
+        messagebox.showerror("Erro", f"Erro ao ler o arquivo Excel: {e}")
     except Exception as e:
         messagebox.showerror("Erro", f"Ocorreu um erro inesperado: {e}")
 
+
+# Auto-explicativo
 def salvar_lista():
     os.makedirs("saves", exist_ok=True)
     caminho_arquivo = os.path.join("saves", "jogos.json")
-    with open(caminho_arquivo, "w") as arquivo:
-        json.dump(lista_jogos, arquivo)
+    with open(caminho_arquivo, "w", encoding="utf-8") as arquivo:
+        json.dump(lista_jogos, arquivo, indent=4, ensure_ascii=False)
     messagebox.showinfo("Salvar", "Lista de jogos salva com sucesso!")
-
 
 
 # FUNÇÕES DE GERAÇÃO DE ESTATISTICAS
 
+
+# Auto-explicativo
 def criar_distribuicao_plataformas():
     if not lista_jogos:
         messagebox.showinfo("Informação", "A lista de jogos está vazia.")
@@ -785,8 +819,13 @@ def criar_distribuicao_plataformas():
         for plataforma, quantidade in zip(plataformas, contagens)
     ]
 
-    # Criar o gráfico de pizza
+    # Configurar tela & Gráfico
     plt.figure(figsize=(8, 6))
+    mng = plt.get_current_fig_manager()
+    try:
+        mng.window.state("zoomed")  # Windows
+    except AttributeError:
+        mng.full_screen_toggle()  # Linux/Mac
     plt.pie(
         contagens,
         labels=labels,
@@ -803,6 +842,8 @@ def criar_distribuicao_plataformas():
     # Exibir o gráfico
     plt.show()
 
+
+# Auto-explicativo
 def criar_media_notas_plataformas():
     if not lista_jogos:
         messagebox.showinfo("Informação", "A lista de jogos está vazia.")
@@ -838,15 +879,19 @@ def criar_media_notas_plataformas():
         for plataforma in plataformas
     ]
 
-    # Gráfico de barras
+    # Configurar tela & Gráfico
     plt.figure(figsize=(10, 6))
+    mng = plt.get_current_fig_manager()
+    try:
+        mng.window.state("zoomed")  # Windows
+    except AttributeError:
+        mng.full_screen_toggle()  # Linux/Mac
     plt.bar(plataformas, medias, color="skyblue", edgecolor="black")
 
     # Adicionar valores acima das barras
     for i, media in enumerate(medias):
         plt.text(i, media + 0.1, f"{media:.2f}", ha="center", fontsize=10)
 
-    # Configurações do gráfico
     plt.title("Média de Notas por Plataforma", fontsize=14, fontweight="bold")
     plt.xlabel("Plataformas", fontsize=12)
     plt.ylabel("Média das Notas", fontsize=12)
@@ -856,6 +901,8 @@ def criar_media_notas_plataformas():
     # Exibir o gráfico
     plt.show()
 
+
+# Auto-explicativo
 def criar_tempo_total_plataformas():
     if not lista_jogos:
         messagebox.showinfo("Informação", "A lista de jogos está vazia.")
@@ -904,15 +951,19 @@ def criar_tempo_total_plataformas():
         f"{plataforma} ({tempos_horas[i]}h)" for i, plataforma in enumerate(plataformas)
     ]
 
-    # Gráfico de barras
+    # Configurar tela & Gráfico
     plt.figure(figsize=(10, 6))
+    mng = plt.get_current_fig_manager()
+    try:
+        mng.window.state("zoomed")  # Windows
+    except AttributeError:
+        mng.full_screen_toggle()  # Linux/Mac
     plt.bar(plataformas, tempos_horas, color="lightgreen", edgecolor="black")
 
     # Adicionar valores acima das barras
     for i, tempo in enumerate(tempos_horas):
         plt.text(i, tempo + 0.1, f"{tempo}h", ha="center", fontsize=10)
 
-    # Configurações do gráfico
     plt.title("Tempo Total de zeramento por Plataforma", fontsize=14, fontweight="bold")
     plt.xlabel("Plataformas", fontsize=12)
     plt.ylabel("Tempo Total (Horas)", fontsize=12)
@@ -922,6 +973,8 @@ def criar_tempo_total_plataformas():
     # Exibir o gráfico
     plt.show()
 
+
+# Auto-explicativo
 def criar_grafico_jogos_por_ano():
     if not lista_jogos:
         messagebox.showinfo("Informação", "A lista de jogos está vazia.")
@@ -939,7 +992,13 @@ def criar_grafico_jogos_por_ano():
     anos = sorted(jogos_por_ano.keys())
     contagem = [jogos_por_ano[ano] for ano in anos]
 
+    # Configurar tela & Gráfico
     plt.figure(figsize=(8, 5))
+    mng = plt.get_current_fig_manager()
+    try:
+        mng.window.state("zoomed")  # Windows
+    except AttributeError:
+        mng.full_screen_toggle()  # Linux/Mac
     plt.bar(anos, contagem, color="skyblue")
     plt.xlabel("Ano")
     plt.ylabel("Quantidade de Jogos Zerados")
@@ -948,6 +1007,8 @@ def criar_grafico_jogos_por_ano():
     plt.tight_layout()
     plt.show()
 
+
+# Auto-explicativo
 def criar_grafico_comparativo_generos():
     if not lista_jogos:
         messagebox.showinfo("Informação", "A lista de jogos está vazia.")
@@ -978,12 +1039,16 @@ def criar_grafico_comparativo_generos():
         for genero in generos
     }
 
-    # Plotar o gráfico
+    # Configurar tela & Gráfico
     plt.figure(figsize=(10, 6))
+    mng = plt.get_current_fig_manager()
+    try:
+        mng.window.state("zoomed")  # Windows
+    except AttributeError:
+        mng.full_screen_toggle()  # Linux/Mac
     for genero, valores_genero in valores.items():
         plt.plot(anos, valores_genero, marker="o", label=genero)
 
-    # Configurações do gráfico
     plt.xlabel("Ano", fontsize=12)
     plt.ylabel("Quantidade de Jogos Zerados", fontsize=12)
     plt.title("Comparação de Gêneros Zerados por Ano", fontsize=14, fontweight="bold")
@@ -995,6 +1060,8 @@ def criar_grafico_comparativo_generos():
 
     plt.show()
 
+
+# Auto-explicativo
 def criar_analise_de_notas():
     if not lista_jogos:
         messagebox.showinfo("Informação", "A lista de jogos está vazia.")
@@ -1018,8 +1085,13 @@ def criar_analise_de_notas():
     # Calcular a média das notas
     media_notas = np.mean(notas)
 
-    # Gráfico de barras
-    plt.figure(figsize=(10, 6))
+    # Configurar tela & Gráfico
+    plt.figure(figsize=(15, 8))
+    mng = plt.get_current_fig_manager()
+    try:
+        mng.window.state("zoomed")  # Windows
+    except AttributeError:
+        mng.full_screen_toggle()  # Linux/Mac
     plt.bar(
         contagem_notas.keys(),
         contagem_notas.values(),
@@ -1032,7 +1104,6 @@ def criar_analise_de_notas():
         y=media_notas, color="red", linestyle="--", label=f"Média: {media_notas:.2f}"
     )
 
-    # Configurações do gráfico
     plt.title("Análise de Notas", fontsize=14, fontweight="bold")
     plt.xlabel("Notas", fontsize=12)
     plt.ylabel("Quantidade de Jogos", fontsize=12)
@@ -1044,6 +1115,8 @@ def criar_analise_de_notas():
     # Exibir o gráfico
     plt.show()
 
+
+# Auto-explicativo
 def contar_jogos_zerados_por_ano(ano):
     numero_jogos_zerados = 0
     for jogo in lista_jogos:
@@ -1054,6 +1127,8 @@ def contar_jogos_zerados_por_ano(ano):
                 numero_jogos_zerados += 1
     return numero_jogos_zerados
 
+
+# Auto-explicativo
 def calcular_tempo_total_jogado():
     total_minutos = 0
 
@@ -1078,10 +1153,14 @@ def calcular_tempo_total_jogado():
         f"Você perdeu {total_dias} dias, {total_horas} horas, {total_minutos} minutos, da sua vida com jogos",
     )
 
+
+# Auto-explicativo
 def calcular_total_minutos(tempo_jogado):
     horas, minutos = map(int, tempo_jogado.split(":"))
     return horas * 60 + minutos
 
+
+# Já falei que é Auto-explicativo?
 def criar_grafico_generos():
     if not lista_jogos:
         messagebox.showinfo("Informação", "A lista de jogos está vazia.")
@@ -1114,13 +1193,20 @@ def criar_grafico_generos():
         f"{genero} ({quantidade})" for genero, quantidade in zip(generos, contagem)
     ]
 
-    # Criar gráfico de pizza
+    # Configurar tela & Gráfico
     plt.figure(figsize=(8, 8))
+    mng = plt.get_current_fig_manager()
+    try:
+        mng.window.state("zoomed")  # Windows
+    except AttributeError:
+        mng.full_screen_toggle()  # Linux/Mac
     plt.pie(contagem, labels=labels, autopct="%1.1f%%", startangle=140)
     plt.title("Distribuição de Gêneros (Número de Jogos)")
     plt.axis("equal")  # Garantir que o gráfico seja um círculo
     plt.show()
 
+
+# Ok, por aqui, todas as funções fazem exatamente o que o nome delas dizem
 def exibir_numero_jogos_zerados_por_ano():
     try:
         ano = askinteger("Jogos Zerados (Por ano)", "Digite o ano desejado:")
@@ -1132,6 +1218,7 @@ def exibir_numero_jogos_zerados_por_ano():
             )
     except ValueError:
         messagebox.showerror("Erro", "Ano inválido. Digite um ano válido.")
+
 
 def mostrar_jogos_longos_curto():
     # Filtrar apenas os jogos zerados com tempo jogado válido
@@ -1166,40 +1253,74 @@ def mostrar_jogos_longos_curto():
     except Exception as e:
         messagebox.showerror("Erro", f"Ocorreu um erro: {e}")
 
+
+# FUNÇÕES DE IMPORTAÇÃO E EXPORTAÇÃO MANUAL DO JSON
+
+
 def salvar_em_arquivo():
     nome_arquivo = filedialog.asksaveasfilename(
         defaultextension=".json", filetypes=[("Arquivos JSON", "*.json")]
     )
     if nome_arquivo:
-        with open(nome_arquivo, "w") as arquivo:
-            json.dump(lista_jogos, arquivo)
+        with open(nome_arquivo, "w", encoding="utf-8") as arquivo:
+            json.dump(lista_jogos, arquivo, indent=4, ensure_ascii=False)
         messagebox.showinfo(
             "Salvar em Arquivo", f"Lista de jogos salva em {nome_arquivo} com sucesso!"
         )
+
 
 def carregar_de_arquivo():
     nome_arquivo = filedialog.askopenfilename(filetypes=[("Arquivos JSON", "*.json")])
     if nome_arquivo:
         try:
-            with open(nome_arquivo, "r") as arquivo:
+            with open(nome_arquivo, "r", encoding="utf-8") as arquivo:
                 lista_carregada = json.load(arquivo)
-            lista_jogos.extend(lista_carregada)
-            atualizar_lista()
-            messagebox.showinfo(
-                "Carregar de Arquivo",
-                f"Lista de jogos carregada de {nome_arquivo} com sucesso!",
-            )
+
+            if isinstance(lista_carregada, list):  # Garante que o conteúdo é uma lista
+                # Impede a duplicação de jogos
+                titulos_existentes = {jogo["Título"] for jogo in lista_jogos}
+                novos_jogos = [
+                    jogo
+                    for jogo in lista_carregada
+                    if jogo["Título"] not in titulos_existentes
+                ]
+                jogos_repetidos = len(lista_carregada) - len(novos_jogos)
+
+                if novos_jogos:
+                    lista_jogos.extend(novos_jogos)
+                    atualizar_lista()
+                    messagebox.showinfo(
+                        "Carregar de Arquivo",
+                        f"{len(novos_jogos)} novo{'s' if len(novos_jogos) > 1 else ''} jogo{'s' if len(novos_jogos) > 1 else ''} carregado{'s' if len(novos_jogos) > 1 else ''} de {nome_arquivo} com sucesso!\n"
+                        f"{jogos_repetidos} jogo{'s' if jogos_repetidos != 1 else ''} já existia{'m' if jogos_repetidos != 1 else ''} na lista.",
+                    )
+                else:
+                    messagebox.showinfo(
+                        "Carregar de Arquivo",
+                        f"Nenhum novo jogo foi adicionado. {jogos_repetidos} jogo{'s' if jogos_repetidos != 1 else ''} já existia{'m' if jogos_repetidos != 1 else ''} na lista.",
+                    )
+            else:
+                messagebox.showerror(
+                    "Erro", "O arquivo JSON não contém uma lista válida."
+                )
+
         except FileNotFoundError:
             messagebox.showerror("Erro", "Arquivo não encontrado.")
+        except json.JSONDecodeError:
+            messagebox.showerror(
+                "Erro",
+                "Erro ao ler o arquivo JSON. Verifique se o formato está correto.",
+            )
         except Exception as e:
             messagebox.showerror(
                 "Erro", f"Ocorreu um erro ao carregar o arquivo JSON: {e}"
             )
 
 
-
 # FUNÇÕES DE INTERFACE GRÁFICA (UI)
 
+
+# Copiar e colar para todo botão clicavel do programa
 def estilizar_botao(
     botao,
     cor_fundo,
@@ -1227,6 +1348,8 @@ def estilizar_botao(
     botao.bind("<Enter>", lambda e: botao.config(bg=efeito_hover))
     botao.bind("<Leave>", lambda e: botao.config(bg=cor_fundo))
 
+
+# Faz o botão direito do mouse funcionar na lista
 def abrir_menu_contexto(event):
     # Obter o índice do item clicado com o botão direito
     index = lista_jogos_listbox.nearest(event.y)
@@ -1253,6 +1376,8 @@ def abrir_menu_contexto(event):
     # Exibir o menu na posição do cursor
     menu.post(event.x_root, event.y_root)
 
+
+# Acessa com o botão direito e pesquisa no google
 def pesquisar_no_google():
     # Obtenha o índice do jogo selecionado
     indice_selecionado = lista_jogos_listbox.curselection()[0]
@@ -1277,6 +1402,8 @@ def pesquisar_no_google():
     # Abrir o navegador padrão para realizar a pesquisa
     webbrowser.open(pesquisa_google_url)
 
+
+# Previne erro do usuario, habilitando a edição de conteudo dentro do programa
 def editar_jogo():
     global filtro_window, janela_edicao, nota_entry
     selecionado = lista_jogos_listbox.curselection()
@@ -1458,6 +1585,8 @@ def editar_jogo():
         excluir_button.grid(row=9, column=0, columnspan=2, pady=10)
         estilizar_botao(excluir_button, cor_fundo="gray", largura=20, altura=1)
 
+
+# Janela para adição de filtro da lista (Puramente visual)
 def mostrar_jogos_filtrados():
     global filtro_window, filtro_titulo_entry, filtro_genero_entry, filtro_plataforma_combobox
     global filtro_min_nota_entry, filtro_max_nota_entry, filtro_ano_entry, filtro_metodo_combobox
@@ -1539,7 +1668,12 @@ def mostrar_jogos_filtrados():
                 return False
             if filtros["Nota"]:
                 try:
-                    if float(jogo["Nota"]) < float(filtros["Nota"]):
+                    nota_jogo = jogo["Nota"]
+                    if nota_jogo is None or nota_jogo == "":
+                        return False
+                    if float(jogo["Nota"]) < float(
+                        filtros["Nota"]
+                    ):  # Aplica a nota mínima
                         return False
                 except ValueError:
                     messagebox.showerror(
@@ -1547,6 +1681,8 @@ def mostrar_jogos_filtrados():
                     )
                     return False
             if filtros["Ano"]:
+                if not jogo["Data de Zeramento"].strip():
+                    return False
                 try:
                     ano_jogo = datetime.strptime(
                         jogo["Data de Zeramento"], "%d/%m/%Y"
@@ -1554,7 +1690,10 @@ def mostrar_jogos_filtrados():
                     if int(filtros["Ano"]) != ano_jogo:
                         return False
                 except ValueError:
-                    messagebox.showerror("Erro", "Ano inválido.")
+                    messagebox.showerror(
+                        "Erro",
+                        "Ano inválido. Certifique-se de que a data está no formato correto (DD/MM/AAAA).",
+                    )
                     return False
             if filtros["Método"] and filtros["Método"] != jogo["Forma de Zeramento"]:
                 return False
@@ -1578,6 +1717,8 @@ def mostrar_jogos_filtrados():
 
     estilizar_botao(botao_filtro, cor_fundo="gray", largura=15, altura=1)
 
+
+# Todo o parametro do checklist está contido aqui
 def gerenciar_checklist():
     pasta_saves = "saves"
     os.makedirs(pasta_saves, exist_ok=True)
@@ -1785,17 +1926,33 @@ def gerenciar_checklist():
 
     atualizar_tarefas()
 
+
+# Dois cliques em um jogo mostra informações rapidas dele
 def mostrar_informacoes(event):
     selecionado = lista_jogos_listbox.curselection()
     if selecionado:
         indice_selecionado = int(selecionado[0])
         if 0 <= indice_selecionado < len(jogos_filtrados):
             # Obter o jogo diretamente da lista filtrada
-            jogo_selecionado = jogos_filtrados[indice_selecionado]
+            jogo = jogos_filtrados[indice_selecionado]
 
-            mensagem = f"Informações do Jogo:\n\nTítulo: {jogo_selecionado['Título']}\nGênero: {jogo_selecionado['Gênero']}\nPlataforma: {jogo_selecionado['Plataforma']}\nData de Zeramento: {jogo_selecionado['Data de Zeramento']}\nForma de Zeramento: {jogo_selecionado['Forma de Zeramento']}\nDescrição de Zeramento: {jogo_selecionado['Descrição de Zeramento']}\nTempo Jogado: {jogo_selecionado['Tempo Jogado']}\nNota: {jogo_selecionado['Nota']}"
+            # Criar a mensagem formatada
+            mensagem = (
+                f"{jogo['Título']}\n"
+                f"{'─'*40}\n"
+                f"🎮 Gênero: {jogo['Gênero']}\n"
+                f"🖥️ Plataforma: {jogo['Plataforma']}\n"
+                f"📅 Data de Zeramento: {jogo['Data de Zeramento'] or 'N/A'}\n"
+                f"🏆 Forma de Zeramento: {jogo['Forma de Zeramento']}\n"
+                f"📝 Descrição: {jogo['Descrição de Zeramento'] or 'Nenhuma'}\n"
+                f"⏳ Tempo Jogado: {jogo['Tempo Jogado'] or 'N/A'}\n"
+                f"⭐ Nota: {jogo['Nota'] if jogo['Nota'] else 'Sem nota'}"
+            )
+
             messagebox.showinfo("Informações do Jogo", mensagem)
 
+
+# Botão direito em cima do nome do jogo e clique em copiar
 def copiar_nome():
     # Obtenha o índice do jogo selecionado
     indice_selecionado = lista_jogos_listbox.curselection()[0]
@@ -1812,16 +1969,22 @@ def copiar_nome():
     # Copie o título do jogo para a área de transferência
     pyperclip.copy(titulo_do_jogo)
 
+
+# FUNÇÕES DE INTERFACE GRÁFICA (WALLPAPER)
+
+
+# Função para adicionar wallpapers do proprio usuario
 def selecionar_wallpaper():
-    """Abre um seletor de arquivos para escolher a imagem e inicia a edição."""
+    # Abre um seletor de arquivos para escolher a imagem e inicia a edição.
     caminho_imagem = filedialog.askopenfilename(
         filetypes=[("Imagens", "*.png;*.jpg;*.jpeg")]
     )
     if caminho_imagem:
         editar_wallpaper(caminho_imagem)
 
+
 def editar_wallpaper(caminho_imagem):
-    """Abre uma janela para recortar o wallpaper antes de salvar."""
+    # Abre uma janela para recortar o wallpaper antes de salvar.
     global img_tk, img_editando, canvas, rect_id, img_original
     global x_inicial, y_inicial, desloc_x, desloc_y, redimensionando, largura_recorte, altura_recorte
 
@@ -1949,8 +2112,9 @@ def editar_wallpaper(caminho_imagem):
     )
     btn_confirmar.pack(pady=10)
 
+
 def salvar_wallpaper(imagem, largura, altura):
-    """Salva a imagem cortada como wallpaper.png na pasta layout."""
+    # Salva a imagem cortada como wallpaper.png na pasta layout.
     pasta_layout = "layout"
     os.makedirs(pasta_layout, exist_ok=True)
 
@@ -1963,6 +2127,7 @@ def salvar_wallpaper(imagem, largura, altura):
     # Atualizar a interface
     atualizar_wallpaper()
 
+
 def atualizar_wallpaper():
     caminho_wallpaper = os.path.join("layout", "wallpaper.png")
 
@@ -1973,6 +2138,7 @@ def atualizar_wallpaper():
         # Aplicar o wallpaper como fundo
         wallpaper_label.config(image=img_tk)
         wallpaper_label.image = img_tk
+
 
 def carregar_wallpaper():
     global wallpaper_tk
@@ -1986,6 +2152,10 @@ def carregar_wallpaper():
         # Aplicar o wallpaper como fundo
         wallpaper_label.config(image=wallpaper_tk)
         wallpaper_label.image = wallpaper_tk  # Evita descarte
+
+
+# FUNÇÕES DE INTERFACE GRÁFICA (FUNDO)
+
 
 def carregar_background():
     global background_tk
@@ -2013,6 +2183,8 @@ def carregar_background():
 
 # OUTRAS UTILIDADES
 
+
+# Util para ctrl c + v de mensagem de erro
 def show_error_message(message):
     error_window = tk.Toplevel(root)
     error_window.title("Algo está errado ;-;")
@@ -2021,6 +2193,8 @@ def show_error_message(message):
     ok_button = tk.Button(error_window, text="OK", command=error_window.destroy)
     ok_button.pack()
 
+
+# Sempre que fecha o programa ele é aberto
 def on_closing():
     resposta = messagebox.askyesnocancel(
         "Sair", "Deseja salvar antes de Sair? Os dados não salvos serão perdidos."
@@ -2031,6 +2205,8 @@ def on_closing():
         salvar_lista()
     root.destroy()
 
+
+# Resumo da sua jornada
 def criar_aba_resumo():
     resumo_window = tk.Toplevel(root)
     resumo_window.title("Resumo Geral")
@@ -2249,6 +2425,8 @@ def criar_aba_resumo():
         fg="white",
     ).pack(pady=10)
 
+
+# Ajusta o tempo jogado
 def substituir_espaco_por_dois_pontos(event):
     tempo_jogado_entry_var.set(tempo_jogado_entry_var.get().replace(" ", ":"))
 
@@ -2314,39 +2492,106 @@ genero_entry.grid(row=1, column=2, padx=10, pady=5, sticky=tk.W)
 
 genero_label = tk.Label(root, text="Gênero*:")
 genero_label.grid(row=1, column=0, padx=10, pady=5, sticky=tk.W)
-generos_disponiveis = sum([
-    # RPG
-    ["RPG", "Action RPG", "RPG de Turno", "RPG Tático", "JRPG", "Action JRPG", 
-     "JRPG de Turno", "JRPG Tático", "Dungeon Crawler", "MMORPG", "True RPG"],
-    # Aventura
-    ["Aventura", "Aventura Gráfica", "Point and Click", "Metroidvania", "Survival Horror"],
-    # Ação
-    ["Ação", "Hack and Slash", "Beat 'em Up", "Stealth", "Action-Adventure"],
-    # Estratégia
-    ["Estratégia", "RTS (Real-Time Strategy)", "TBS (Turn-Based Strategy)", 
-     "Tower Defense", "4X (eXplore, eXpand, eXploit, eXterminate)"],
-    # Simulação
-    ["Simulação", "Simulação de Vida", "Simulação de Construção", "Simulação de Negócios",
-     "Simulação de Voo", "Simulação de Veículos", "Simulação Social"],
-    # Esportes
-    ["Esportes", "Futebol", "Basquete", "Corrida", "Golfe", "Tênis", 
-     "Esportes Radicais", "Automobilismo", "Futebol Americano"],
-    # Puzzle
-    ["Puzzle", "Quebra-Cabeças Lógicos", "Match-3", "Jogos de Palavras", "Sokoban", "Escape Room"],
-    # Luta
-    ["Luta", "2D Fighting", "3D Fighting", "Arena Fighting", "Party Fighting", "Beat 'em Up"],
-    # Tiro
-    ["Tiro", "FPS (First-Person Shooter)", "TPS (Third-Person Shooter)", 
-     "Shoot 'em Up", "Light Gun Shooter", "Bullet Hell"],
-    # Horror
-    ["Horror", "Survival Horror", "Psychological Horror", "Action Horror", "VR Horror"],
-    # Sandbox
-    ["Sandbox", "World Builder", "Exploration", "Open World", "Criativo"],
-    # Party Games
-    ["Jogos de Festa", "Minigames", "Quiz", "Jogos de Tabuleiro Adaptados"],
-    # Outros
-    ["Educação", "Treinamento", "Documentário", "Outro"]
-], [])
+generos_disponiveis = sum(
+    [
+        # RPG
+        [
+            "RPG",
+            "Action RPG",
+            "RPG de Turno",
+            "RPG Tático",
+            "JRPG",
+            "Action JRPG",
+            "JRPG de Turno",
+            "JRPG Tático",
+            "Dungeon Crawler",
+            "MMORPG",
+            "True RPG",
+        ],
+        # Aventura
+        [
+            "Aventura",
+            "Aventura Gráfica",
+            "Point and Click",
+            "Metroidvania",
+            "Survival Horror",
+        ],
+        # Ação
+        ["Ação", "Hack and Slash", "Beat 'em Up", "Stealth", "Action-Adventure"],
+        # Estratégia
+        [
+            "Estratégia",
+            "RTS (Real-Time Strategy)",
+            "TBS (Turn-Based Strategy)",
+            "Tower Defense",
+            "4X (eXplore, eXpand, eXploit, eXterminate)",
+        ],
+        # Simulação
+        [
+            "Simulação",
+            "Simulação de Vida",
+            "Simulação de Construção",
+            "Simulação de Negócios",
+            "Simulação de Voo",
+            "Simulação de Veículos",
+            "Simulação Social",
+        ],
+        # Esportes
+        [
+            "Esportes",
+            "Futebol",
+            "Basquete",
+            "Corrida",
+            "Golfe",
+            "Tênis",
+            "Esportes Radicais",
+            "Automobilismo",
+            "Futebol Americano",
+        ],
+        # Puzzle
+        [
+            "Puzzle",
+            "Quebra-Cabeças Lógicos",
+            "Match-3",
+            "Jogos de Palavras",
+            "Sokoban",
+            "Escape Room",
+        ],
+        # Luta
+        [
+            "Luta",
+            "2D Fighting",
+            "3D Fighting",
+            "Arena Fighting",
+            "Party Fighting",
+            "Beat 'em Up",
+        ],
+        # Tiro
+        [
+            "Tiro",
+            "FPS (First-Person Shooter)",
+            "TPS (Third-Person Shooter)",
+            "Shoot 'em Up",
+            "Light Gun Shooter",
+            "Bullet Hell",
+        ],
+        # Horror
+        [
+            "Horror",
+            "Survival Horror",
+            "Psychological Horror",
+            "Action Horror",
+            "VR Horror",
+        ],
+        # Sandbox
+        ["Sandbox", "World Builder", "Exploration", "Open World", "Criativo"],
+        # Party Games
+        ["Jogos de Festa", "Minigames", "Quiz", "Jogos de Tabuleiro Adaptados"],
+        # Outros
+        ["Educação", "Treinamento", "Documentário", "Outro"],
+    ],
+    [],
+)
 
 genero_var = tk.StringVar()
 genero_combobox = ttk.Combobox(
@@ -2357,42 +2602,67 @@ genero_combobox.set("")
 genero_combobox.bind("<KeyRelease>", atualizar_entry)
 genero_combobox.bind("<<ComboboxSelected>>", atualizar_genero)
 
-plataformas_disponiveis = sum([
-    # Atari
-    ["Atari 2600", "Atari 5200", "Atari 7800"],
-    # Nintendo
-    ["NES (Nintendo Entertainment System)", "SNES (Super Nintendo Entertainment System)", 
-     "Virtual Boy", "Nintendo 64", "GameCube", "Game Boy", "Game Boy Color", 
-     "Game Boy Advance", "Nintendo DS", "Nintendo Switch"],
-    # Sega
-    ["Sega Master System", "Sega Genesis (Mega Drive)", "Game Gear", "Sega Nomad", 
-     "Sega Saturn", "Sega Dreamcast"],
-    # Sony
-    ["PlayStation 1", "PlayStation 2", "PlayStation Portable", "PlayStation 3", 
-     "PlayStation Vita", "PlayStation 4", "PlayStation 5"],
-    # Microsoft
-    ["Xbox Clássico", "Xbox 360", "Xbox One", "Xbox Series X|S"],
-    # SNK
-    ["Neo Geo", "Neo Geo Pocket", "Neo Geo Pocket Color", "Neo Geo X"],
-    # NEC
-    ["TurboGrafx-16 (PC Engine)", "TurboGrafx-CD"],
-    # Mattel
-    ["Intellivision"],
-    # Coleco
-    ["ColecoVision"],
-    # Commodore
-    ["Commodore 64", "Amiga"],
-    # Sinclair
-    ["ZX Spectrum"],
-    # Panasonic/GoldStar
-    ["3DO"],
-    # Portáteis adicionais
-    ["Bandai WonderSwan", "Bandai WonderSwan Color"],
-    # Modernos e genéricos
-    ["PC", "Mobile"],
-    # Outros
-    ["Outro"]
-], [])
+plataformas_disponiveis = sum(
+    [
+        # Atari
+        ["Atari 2600", "Atari 5200", "Atari 7800"],
+        # Nintendo
+        [
+            "NES (Nintendo Entertainment System)",
+            "SNES (Super Nintendo Entertainment System)",
+            "Virtual Boy",
+            "Nintendo 64",
+            "GameCube",
+            "Game Boy",
+            "Game Boy Color",
+            "Game Boy Advance",
+            "Nintendo DS",
+            "Nintendo Switch",
+        ],
+        # Sega
+        [
+            "Sega Master System",
+            "Sega Genesis (Mega Drive)",
+            "Game Gear",
+            "Sega Nomad",
+            "Sega Saturn",
+            "Sega Dreamcast",
+        ],
+        # Sony
+        [
+            "PlayStation 1",
+            "PlayStation 2",
+            "PlayStation Portable",
+            "PlayStation 3",
+            "PlayStation Vita",
+            "PlayStation 4",
+            "PlayStation 5",
+        ],
+        # Microsoft
+        ["Xbox Clássico", "Xbox 360", "Xbox One", "Xbox Series X|S"],
+        # SNK
+        ["Neo Geo", "Neo Geo Pocket", "Neo Geo Pocket Color", "Neo Geo X"],
+        # NEC
+        ["TurboGrafx-16 (PC Engine)", "TurboGrafx-CD"],
+        # Mattel
+        ["Intellivision"],
+        # Coleco
+        ["ColecoVision"],
+        # Commodore
+        ["Commodore 64", "Amiga"],
+        # Sinclair
+        ["ZX Spectrum"],
+        # Panasonic/GoldStar
+        ["3DO"],
+        # Portáteis adicionais
+        ["Bandai WonderSwan", "Bandai WonderSwan Color"],
+        # Modernos e genéricos
+        ["PC", "Mobile"],
+        # Outros
+        ["Outro"],
+    ],
+    [],
+)
 
 # Campo de entrada e label para plataforma
 plataforma_label = tk.Label(root, text="Plataforma*:")

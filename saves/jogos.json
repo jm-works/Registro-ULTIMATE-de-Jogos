@@ -1,1 +1,42 @@
-[{"T\u00edtulo": "Vampire: The Masquerade \u2013 Bloodlines (Basic Patch)", "G\u00eanero": "RPG", "Plataforma": "PC", "Data de Zeramento": "21/01/2025", "Forma de Zeramento": "Hist\u00f3ria", "Descri\u00e7\u00e3o de Zeramento": "Fiz o jogo inteiro, com basicamente todas as sidequests, joguei apenas com toreador, o jogo tem um fator replay quase infinito, jog\u00e3o, mas envelheceu um pouco mal", "Tempo Jogado": "28:00", "Nota": 8}, {"T\u00edtulo": "Max Payne", "G\u00eanero": "TPS (Third-Person Shooter)", "Plataforma": "PC", "Data de Zeramento": "31/01/2025", "Forma de Zeramento": "Hist\u00f3ria", "Descri\u00e7\u00e3o de Zeramento": "Bom jogo, mas s\u00f3 \u00e9 jogavel hoje com alguns poucos mods, dificuldade elevada mas n\u00e3o impossivel, \u00e9 bem tentativa e erro.", "Tempo Jogado": "5:00", "Nota": 7}, {"T\u00edtulo": "Max Payne 2: The Fall of Max Payne", "G\u00eanero": "TPS (Third-Person Shooter)", "Plataforma": "PC", "Data de Zeramento": "01/02/2025", "Forma de Zeramento": "Hist\u00f3ria", "Descri\u00e7\u00e3o de Zeramento": "Melhorou bastante do primiro, at\u00e9 hoje muito bonito, mas o jogo come\u00e7a a ficar um pouco repetitivo mais ao final.", "Tempo Jogado": "06:00", "Nota": 8}, {"T\u00edtulo": "Kurohy\u014d: Ry\u016b ga Gotoku Shinsh\u014d", "G\u00eanero": "Action-Adventure", "Plataforma": "PlayStation Portable", "Data de Zeramento": "", "Forma de Zeramento": "Planejo Jogar", "Descri\u00e7\u00e3o de Zeramento": "Yakuza de PSP, n\u00e3o tem como ser ruim", "Tempo Jogado": "", "Nota": 1}]
+[
+    {
+        "Título": "Vampire: The Masquerade – Bloodlines (Basic Patch)",
+        "Gênero": "RPG",
+        "Plataforma": "PC",
+        "Data de Zeramento": "21/01/2025",
+        "Forma de Zeramento": "História",
+        "Descrição de Zeramento": "Fiz o jogo inteiro, com basicamente todas as sidequests, joguei apenas com toreador, o jogo tem um fator replay quase infinito, jogão, mas envelheceu um pouco mal",
+        "Tempo Jogado": "28:00",
+        "Nota": 8
+    },
+    {
+        "Título": "Max Payne",
+        "Gênero": "TPS (Third-Person Shooter)",
+        "Plataforma": "PC",
+        "Data de Zeramento": "31/01/2025",
+        "Forma de Zeramento": "História",
+        "Descrição de Zeramento": "Bom jogo, mas só é jogavel hoje com alguns poucos mods, dificuldade elevada mas não impossivel, é bem tentativa e erro.",
+        "Tempo Jogado": "5:00",
+        "Nota": 7
+    },
+    {
+        "Título": "Max Payne 2: The Fall of Max Payne",
+        "Gênero": "TPS (Third-Person Shooter)",
+        "Plataforma": "PC",
+        "Data de Zeramento": "01/02/2025",
+        "Forma de Zeramento": "História",
+        "Descrição de Zeramento": "Melhorou bastante do primeiro, até hoje muito bonito, mas o jogo começa a ficar um pouco repetitivo mais ao final.",
+        "Tempo Jogado": "6:00",
+        "Nota": 8
+    },
+    {
+        "Título": "Kurohyō: Ryū ga Gotoku Shinshō",
+        "Gênero": "Action-Adventure",
+        "Plataforma": "PlayStation Portable",
+        "Data de Zeramento": "",
+        "Forma de Zeramento": "Planejo Jogar",
+        "Descrição de Zeramento": "Yakuza de PSP, não tem como ser ruim.",
+        "Tempo Jogado": "",
+        "Nota": null
+    }
+]

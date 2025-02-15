@@ -66,36 +66,39 @@ O programa possui uma interface intuitiva, inspirada em menus clássicos de comp
 
 ## 🏆 Como Usar
 
+### Brinque um pouco
+- A lista já vem pré-configurada com alguns jogos, aproveite para testar as funções até se sentir satisfeito em criar a sua propria lista.
+
+### Dê um reset na lista
+1. Na aba superior, clique em **"Arquivo"** e selecione **"Resetar todas as listas"**.
+
 ### Adicionando um Jogo
 1. Preencha os campos obrigatórios: **Título, Gênero, Plataforma e Estado**.
 2. Se o jogo foi finalizado, informe **Data de Zeramento, Tempo Jogado e Nota**.
 3. Clique em **"Adicionar Jogo"**.
 
 ### Editando e Excluindo Jogos
-- Para editar um jogo, use o menu rápido com o botão direito em cima da lista e clique em **"Editar"**.
-- Para excluir, use o menu rápido com o botão direito em cima da lista e clique em **"Excluir"**.
+- Para editar um jogo, use o menu rápido com o botão direito em cima do jogo e clique em **"Editar"**.
+- Para excluir, use o menu rápido com o botão direito em cima do jogo e clique em **"Excluir"**.
 
 ### Exportação e Importação de Dados
-- **Exportar** para PDF ou Excel.
-- **Importar** listas prontas de jogos.
+- Usa a aba superior **"Arquivo"** e clique em **Exportar** para PDF, Excel ou JSON.
+- Usa a aba superior **"Arquivo"** e clique em **Importar** para Excel ou JSON.
 
 ### Filtrando e Limpando Filtros
 
 - Para filtrar, use o menu rápido com o botão direito em cima da lista e clique em **"Filtrar"**.
 - Para limpar filtro, use o menu rápido com o botão direito em cima da lista e clique em **"Limpar Filtros"**.
-- **Obs:** Use as abas superiores para limpar o filtro caso não tenha nenhum jogo aparecendo na lista
+- **Observação:** Se nenhum jogo estiver aparecendo na lista, use as abas superiores para limpar o filtro.
 
 ### Estatísticas e Relatórios
-- No menu **"Estatísticas"**, veja gráficos detalhados sobre:
-  - Jogos zerados por ano.
-  - Média de notas por plataforma.
-  - Distribuição do tempo jogado.
+- No menu **"Informações"**, veja gráficos detalhados sobre todas suas estatísticas.
 
 ### Checklist de Missões
-- No menu **"Minhas Tarefas"**, acompanhe desafios dentro dos jogos.
+- No menu **"Minhas Tarefas"**, acompanhe as missões que você poderá criar.
 
 ### Resumo da sua Jornada
-- No menu **"Resumo da sua Jornada"**, veja um relatório detalhado com todos os seus jogos registrados.
+- No menu **"Resumo da sua Jornada"**, veja um relatório detalhado e resumido, com todos os seus jogos registrados.
 
 ---
 

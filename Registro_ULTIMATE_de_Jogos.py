@@ -78,6 +78,31 @@ def carregar_lista():
         return []
 
 
+# Reseta todo os saves
+def resetar_lista():
+    confirmar = messagebox.askyesno(
+        "Resetar",
+        "Tem certeza que deseja apagar todo o registro de jogos e tarefas?\nEsta ação não poderá ser desfeita."
+    )
+    if confirmar:
+        global lista_jogos, tarefas
+        lista_jogos = []  # Limpa a lista de jogos
+        tarefas = []      # Limpa a lista de tarefas
+        atualizar_lista(lista_jogos)  
+
+        # Apaga o arquivo de jogos, se existir
+        caminho_jogos = os.path.join("saves", "jogos.json")
+        if os.path.exists(caminho_jogos):
+            os.remove(caminho_jogos)
+
+        # Apaga o arquivo de tarefas, se existir
+        caminho_tarefas = os.path.join("saves", "tarefas.json")
+        if os.path.exists(caminho_tarefas):
+            os.remove(caminho_tarefas)
+
+        messagebox.showinfo("Registro Resetado", "Todos os registros e tarefas foram apagados com sucesso!")
+
+
 # Verificação de preenchimento das tabelas
 def validar_campos(
     titulo, genero, plataforma, data_zeramento, tempo_jogado, nota, estado
@@ -2766,6 +2791,7 @@ arquivo_menu.add_command(label="Salvar em Arquivo JSON", command=salvar_em_arqui
 arquivo_menu.add_command(label="Carregar de Arquivo JSON", command=carregar_de_arquivo)
 arquivo_menu.add_separator()
 arquivo_menu.add_command(label="Alterar Wallpaper", command=selecionar_wallpaper)
+arquivo_menu.add_command(label="Resetar todas as listas", command=resetar_lista)
 arquivo_menu.add_separator()
 arquivo_menu.add_command(label="Sair", command=on_closing)
 

@@ -31,7 +31,7 @@ pip install pandas numpy openpyxl reportlab matplotlib pyperclip Pillow
    ```
 3. Execute o programa:
    ```sh
-   python Registro_ULTIMATE_de_Jogos.py
+   python main.py
    ```
 
 ---

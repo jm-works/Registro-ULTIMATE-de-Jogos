@@ -15,7 +15,7 @@ Este programa tem como propósito catalogar jogos finalizados, inspirado na plan
 
 ## 🛠 Instalação
 ### Requisitos
-Para rodar o software, é necessário ter **Python 3.x** instalado e as seguintes bibliotecas:
+Para rodar o software, é necessário ter **Python 3.13.x** instalado e as seguintes bibliotecas:
 ```sh
 pip install pandas numpy openpyxl reportlab matplotlib pyperclip Pillow
 ```

@@ -134,7 +134,7 @@ def validar_campos(
             return "A data de zeramento não é válida!"
 
         # Validação do campo 'Tempo Jogado'
-        if not re.match(r"^\d{1,2}:\d{2}$", tempo_jogado):
+        if not re.match(r"^\d+:\d{2}$", tempo_jogado):
             return "O tempo jogado deve estar no formato HORAS:MINUTOS!"
         try:
             horas, minutos = map(int, tempo_jogado.split(":"))
@@ -279,16 +279,17 @@ def formatar_tempo_jogado(event=None):
     # Remove caracteres não numéricos
     texto = "".join(filter(str.isdigit, texto))
 
-    # Formatação automática
-    if len(texto) > 2:
-        texto = texto[:2] + ":" + texto[2:]
+    # Formatação automática: horas (todos dígitos exceto os dois últimos) e minutos (dois últimos)
+    if len(texto) >= 2:
+        horas = texto[:-2]  # Pega todos os dígitos exceto os dois últimos
+        minutos = texto[-2:]  # Pega os dois últimos dígitos
+        texto_formatado = f"{horas}:{minutos}"
+    else:
+        texto_formatado = texto  # Menos de 2 dígitos, não formata
 
-    # Limitar a dois dígitos para horas e minutos
-    if len(texto) > 5:
-        texto = texto[:5]
-
+    # Atualiza o campo de entrada
     tempo_jogado_entry.delete(0, tk.END)
-    tempo_jogado_entry.insert(0, texto)
+    tempo_jogado_entry.insert(0, texto_formatado)
 
 
 # Impedi o usuario fazer besteira na formatação da data
@@ -953,7 +954,7 @@ def criar_tempo_total_plataformas():
         tempo_jogado = jogo.get("Tempo Jogado", "").strip()
 
         # Verificar se o tempo jogado está no formato "HH:MM"
-        if re.match(r"^\d{1,2}:\d{2}$", tempo_jogado):
+        if re.match(r"^\d+:\d{2}$", tempo_jogado):
             horas, minutos = map(int, tempo_jogado.split(":"))
             tempo_total = horas * 60 + minutos
             tempo_por_plataforma[plataforma] = (
@@ -1160,13 +1161,19 @@ def calcular_tempo_total_jogado():
     for jogo in lista_jogos:
         tempo_jogado = jogo.get("Tempo Jogado", "").strip()
 
-        # Validar se o tempo jogado está no formato correto (HH:MM)
-        if re.match(r"^\d{1,2}:\d{2}$", tempo_jogado):
-            horas, minutos = map(int, tempo_jogado.split(":"))
-            total_minutos += horas * 60 + minutos
-        else:
-            # Ignorar jogos com tempo inválido
-            continue
+        # Validar formato e valores
+        if re.match(r"^\d+:\d{2}$", tempo_jogado):
+            try:
+                horas_str, minutos_str = tempo_jogado.split(":")
+                horas = int(horas_str)
+                minutos = int(minutos_str)
+
+                if horas < 0 or minutos < 0 or minutos >= 60:
+                    continue  # Ignorar valores inválidos
+
+                total_minutos += horas * 60 + minutos
+            except ValueError:
+                continue  # Ignorar se conversão falhar
 
     total_horas = total_minutos // 60
     total_minutos = total_minutos % 60
@@ -1175,7 +1182,9 @@ def calcular_tempo_total_jogado():
 
     messagebox.showinfo(
         "Tempo Total Jogado",
-        f"Você perdeu {total_dias} dias, {total_horas} horas, {total_minutos} minutos, da sua vida com jogos",
+        f"Você perdeu um total de:\n"
+        f"{total_dias} dias, {total_horas} horas e {total_minutos} minutos.\n"
+        "Da sua vida ;-;"
     )
 
 

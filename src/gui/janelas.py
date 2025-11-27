@@ -163,7 +163,6 @@ class JanelaMissoes:
 
         self.listbox.bind("<Double-Button-1>", self.toggle_missao)
 
-        # Botões
         frame_btns = tk.Frame(self.top)
         frame_btns.pack(pady=10)
 
@@ -328,13 +327,13 @@ class JanelaWallpaper:
         self.canvas.create_image(0, 0, anchor="nw", image=self.img_tk)
 
         btn = tk.Button(
-            self.top, text="Salvar (Recorte Automático 800x500)", command=self._salvar
+            self.top, text="Salvar (Recorte Automático 600x400)", command=self._salvar
         )
         estilizar_botao(btn, "#27AE60", largura=30)
         btn.pack(pady=10)
 
     def _salvar(self):
-        target = self.img_orig.resize((800, 500), Image.LANCZOS)
+        target = self.img_orig.resize((600, 400), Image.LANCZOS)
 
         os.makedirs(os.path.dirname(WALLPAPER_PATH), exist_ok=True)
         target.save(WALLPAPER_PATH, "PNG")

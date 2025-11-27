@@ -29,8 +29,10 @@ class App:
         self.root = root
         self.root.title("Registro ULTIMATE de Jogos")
 
-        self.root.geometry("800x500")
-        self.root.resizable(True, True)
+        self.LARGURA = 600
+        self.ALTURA = 400
+        self.root.geometry(f"{self.LARGURA}x{self.ALTURA}")
+        self.root.resizable(False, False)
 
         self.dados = GerenciadorDados()
         self.estatisticas = GeradorGraficos()
@@ -39,13 +41,11 @@ class App:
         self.jogos_visualizados = self.lista_jogos.copy()
 
         self._inicializar_variaveis()
-
         self._carregar_assets()
         self._criar_menu()
         self._criar_widgets()
 
         self.atualizar_lista_visual()
-
         self.root.protocol("WM_DELETE_WINDOW", self.ao_fechar)
 
     def _inicializar_variaveis(self):
@@ -63,7 +63,6 @@ class App:
         try:
             if os.path.exists(ICON_PATH):
                 self.root.iconbitmap(ICON_PATH)
-
             self.atualizar_fundo()
         except Exception as e:
             print(f"Erro ao carregar assets: {e}")
@@ -71,23 +70,14 @@ class App:
     def atualizar_fundo(self):
         if os.path.exists(WALLPAPER_PATH) and os.path.exists(BACKGROUND_PATH):
             try:
-                largura = self.root.winfo_width()
-                altura = self.root.winfo_height()
-
-                if largura <= 1:
-                    largura = 800
-                if altura <= 1:
-                    altura = 500
+                largura_alvo = self.LARGURA
+                altura_alvo = self.ALTURA
 
                 wall = Image.open(WALLPAPER_PATH).convert("RGBA")
                 bg = Image.open(BACKGROUND_PATH).convert("RGBA")
 
-                # Redimensiona para preencher a tela
-                wall = wall.resize((largura, altura), Image.LANCZOS)
-
-                # O Background (moldura) pode ser redimensionado ou centralizado.
-                # Aqui vamos redimensionar a moldura junto:
-                bg = bg.resize((largura, altura), Image.LANCZOS)
+                wall = wall.resize((largura_alvo, altura_alvo), Image.LANCZOS)
+                bg = bg.resize((largura_alvo, altura_alvo), Image.LANCZOS)
 
                 final = Image.alpha_composite(wall, bg)
                 self.bg_tk = ImageTk.PhotoImage(final)
@@ -174,27 +164,26 @@ class App:
 
     def _criar_widgets(self):
         self.root.columnconfigure(2, weight=1)
-        self.root.rowconfigure(8, weight=1)
 
         self._criar_campo(0, "Título*:", self.var_titulo)
 
         tk.Label(self.root, text="Gênero*:").grid(
-            row=1, column=0, sticky="w", padx=10, pady=5
+            row=1, column=0, sticky="w", padx=10, pady=3
         )
         cb_gen = ttk.Combobox(
             self.root,
             textvariable=self.var_genero,
             values=GENEROS,
             state="readonly",
-            width=25,  # Aumentei largura
+            width=18,
         )
         cb_gen.grid(row=1, column=1, sticky="w", padx=10)
 
         tk.Label(self.root, text="Plataforma*:").grid(
-            row=2, column=0, sticky="w", padx=10, pady=5
+            row=2, column=0, sticky="w", padx=10, pady=3
         )
         cb_plat = ttk.Combobox(
-            self.root, textvariable=self.var_plataforma, values=PLATAFORMAS, width=25
+            self.root, textvariable=self.var_plataforma, values=PLATAFORMAS, width=18
         )
         cb_plat.grid(row=2, column=1, sticky="w", padx=10)
 
@@ -202,14 +191,14 @@ class App:
         self.var_data.trace_add("write", self._formatar_data)
 
         tk.Label(self.root, text="Estado*:").grid(
-            row=4, column=0, sticky="w", padx=10, pady=5
+            row=4, column=0, sticky="w", padx=10, pady=3
         )
         cb_forma = ttk.Combobox(
             self.root,
             textvariable=self.var_forma,
             values=["História", "100%", "Platina", "Planejo Jogar", "Desistência"],
             state="readonly",
-            width=25,
+            width=18,
         )
         cb_forma.grid(row=4, column=1, sticky="w", padx=10)
         cb_forma.bind("<<ComboboxSelected>>", self._atualizar_campos_estado)
@@ -220,7 +209,7 @@ class App:
         self.var_tempo.trace_add("write", self._formatar_tempo)
 
         tk.Label(self.root, text="Nota (1-10):").grid(
-            row=7, column=0, sticky="w", padx=10, pady=5
+            row=7, column=0, sticky="w", padx=10, pady=3
         )
         self.slider_nota = tk.Scale(
             self.root, from_=1, to=10, orient=tk.HORIZONTAL, variable=self.var_nota
@@ -230,15 +219,17 @@ class App:
         btn_add = tk.Button(
             self.root, text="Adicionar Jogo", command=self.adicionar_jogo
         )
-        estilizar_botao(btn_add, "gray", largura=20, altura=1)
-        btn_add.grid(row=8, column=0, columnspan=2, pady=15)
+        estilizar_botao(btn_add, "gray", largura=15, altura=1)
+        btn_add.grid(row=8, column=0, columnspan=2, pady=10)
 
-        # Frame da Lista (Agora expansível)
         frame_lista = tk.Frame(self.root)
-        frame_lista.grid(row=0, column=2, rowspan=9, padx=10, pady=5, sticky="nsew")
 
-        self.listbox = tk.Listbox(frame_lista, width=40, height=18)
-        self.listbox.pack(side="left", fill="both", expand=True)
+        frame_lista.grid(row=0, column=4, rowspan=9, padx=12, pady=5, sticky="n")
+
+        self.listbox = tk.Listbox(frame_lista, width=40, height=15)
+
+        self.listbox.pack(side="left")
+
         sb = tk.Scrollbar(frame_lista, command=self.listbox.yview)
         sb.pack(side="right", fill="y")
         self.listbox.config(yscrollcommand=sb.set)
@@ -248,12 +239,13 @@ class App:
 
     def _criar_campo(self, row, texto, variavel):
         tk.Label(self.root, text=texto).grid(
-            row=row, column=0, sticky="w", padx=10, pady=5
+            row=row, column=0, sticky="w", padx=10, pady=3
         )
-        tk.Entry(self.root, textvariable=variavel, width=28).grid(
+        tk.Entry(self.root, textvariable=variavel, width=21).grid(
             row=row, column=1, sticky="w", padx=10
         )
 
+    # --- Lógica ---
     def adicionar_jogo(self):
         erro = validar_campos(
             self.var_titulo.get(),
@@ -305,7 +297,6 @@ class App:
                 icone = "📅"
             elif estado == "Desistência":
                 icone = "❌"
-
             self.listbox.insert(tk.END, f"{idx}. {icone} {jogo['Título']}")
 
     def mostrar_info_jogo(self, event):
@@ -313,15 +304,7 @@ class App:
         if not sel:
             return
         jogo = self.jogos_visualizados[sel[0]]
-
-        msg = (
-            f"Título: {jogo['Título']}\n"
-            f"Gênero: {jogo['Gênero']}\n"
-            f"Plataforma: {jogo['Plataforma']}\n"
-            f"Estado: {jogo['Forma de Zeramento']}\n"
-            f"Tempo: {jogo.get('Tempo Jogado', 'N/A')}\n"
-            f"Nota: {jogo.get('Nota', 'N/A')}"
-        )
+        msg = f"Título: {jogo['Título']}\nGênero: {jogo['Gênero']}\nPlataforma: {jogo['Plataforma']}\nEstado: {jogo['Forma de Zeramento']}\nTempo: {jogo.get('Tempo Jogado', 'N/A')}\nNota: {jogo.get('Nota', 'N/A')}"
         messagebox.showinfo("Detalhes", msg)
 
     def _abrir_menu_contexto(self, event):
@@ -329,9 +312,7 @@ class App:
             index = self.listbox.nearest(event.y)
             self.listbox.selection_clear(0, tk.END)
             self.listbox.selection_set(index)
-
             m = Menu(self.root, tearoff=0)
-
             menu_org = Menu(m, tearoff=0)
             menu_org.add_command(
                 label="Título (A-Z)", command=lambda: self._ordenar("titulo")
@@ -346,7 +327,6 @@ class App:
                 label="Plataforma (A-Z)", command=lambda: self._ordenar("plataforma")
             )
             m.add_cascade(label="Organizar Lista", menu=menu_org)
-
             m.add_separator()
             m.add_command(label="Copiar Nome", command=self._copiar_nome)
             m.add_command(label="Pesquisar no Google", command=self._pesquisar_google)
@@ -356,7 +336,6 @@ class App:
             m.add_separator()
             m.add_command(label="Filtrar...", command=self._abrir_janela_filtro)
             m.add_command(label="Limpar Filtros", command=self._limpar_filtros)
-
             m.post(event.x_root, event.y_root)
         except Exception:
             pass
@@ -385,26 +364,23 @@ class App:
         sel = self.listbox.curselection()
         if not sel:
             return
-        jogo = self.jogos_visualizados[sel[0]]
-        pyperclip.copy(jogo["Título"])
+        pyperclip.copy(self.jogos_visualizados[sel[0]]["Título"])
 
     def _pesquisar_google(self):
         sel = self.listbox.curselection()
         if not sel:
             return
-        jogo = self.jogos_visualizados[sel[0]]
         webbrowser.open(
-            f"https://www.google.com/search?q={urllib.parse.quote(jogo['Título'])}"
+            f"https://www.google.com/search?q={urllib.parse.quote(self.jogos_visualizados[sel[0]]['Título'])}"
         )
 
     def _excluir_jogo_selecionado(self):
         sel = self.listbox.curselection()
         if not sel:
             return
-
-        jogo_visual = self.jogos_visualizados[sel[0]]
-        if messagebox.askyesno("Excluir", f"Apagar '{jogo_visual['Título']}'?"):
-            self.lista_jogos.remove(jogo_visual)
+        jogo = self.jogos_visualizados[sel[0]]
+        if messagebox.askyesno("Excluir", f"Apagar '{jogo['Título']}'?"):
+            self.lista_jogos.remove(jogo)
             self._limpar_filtros()
             messagebox.showinfo("Sucesso", "Jogo removido.")
 
@@ -412,34 +388,31 @@ class App:
         sel = self.listbox.curselection()
         if not sel:
             return
-
-        jogo_visual = self.jogos_visualizados[sel[0]]
-
-        if jogo_visual in self.lista_jogos:
-            msg = "Deseja editar este jogo?\n\nO jogo será removido da lista e os dados voltarão para o formulário.\nVocê precisará clicar em 'Adicionar Jogo' novamente para salvar as alterações."
-            if messagebox.askyesno("Editar Jogo", msg):
-                self.var_titulo.set(jogo_visual["Título"])
-                self.var_genero.set(jogo_visual["Gênero"])
-                self.var_plataforma.set(jogo_visual["Plataforma"])
-                self.var_data.set(jogo_visual.get("Data de Zeramento", ""))
-                self.var_forma.set(jogo_visual["Forma de Zeramento"])
-                self.var_desc.set(jogo_visual.get("Descrição de Zeramento", ""))
-                self.var_tempo.set(jogo_visual.get("Tempo Jogado", ""))
+        jogo = self.jogos_visualizados[sel[0]]
+        if jogo in self.lista_jogos:
+            if messagebox.askyesno(
+                "Editar Jogo",
+                "Deseja editar este jogo?\n\nO jogo será removido da lista e os dados voltarão para o formulário.",
+            ):
+                self.var_titulo.set(jogo["Título"])
+                self.var_genero.set(jogo["Gênero"])
+                self.var_plataforma.set(jogo["Plataforma"])
+                self.var_data.set(jogo.get("Data de Zeramento", ""))
+                self.var_forma.set(jogo["Forma de Zeramento"])
+                self.var_desc.set(jogo.get("Descrição de Zeramento", ""))
+                self.var_tempo.set(jogo.get("Tempo Jogado", ""))
                 try:
-                    self.var_nota.set(float(jogo_visual["Nota"]))
+                    self.var_nota.set(float(jogo["Nota"]))
                 except:
                     self.var_nota.set(1)
-
                 self._atualizar_campos_estado()
-
-                self.lista_jogos.remove(jogo_visual)
+                self.lista_jogos.remove(jogo)
                 self._limpar_filtros()
 
     def _abrir_janela_filtro(self):
         top = tk.Toplevel(self.root)
         top.title("Filtrar")
         centralizar_janela(top, 300, 150)
-
         tk.Label(top, text="Buscar por Título:").pack(pady=5)
         entry = tk.Entry(top)
         entry.pack(pady=5)
@@ -467,34 +440,26 @@ class App:
             self.slider_nota.config(state="normal")
 
     def _formatar_data(self, *args):
-        texto_atual = self.var_data.get()
-        limpo = "".join(filter(str.isdigit, texto_atual))
-
-        novo_texto = limpo
-        if len(limpo) > 2:
-            novo_texto = f"{limpo[:2]}/{limpo[2:]}"
-        if len(limpo) > 4:
-            novo_texto = f"{limpo[:2]}/{limpo[2:4]}/{limpo[4:8]}"
-
-        if len(novo_texto) > 10:
-            novo_texto = novo_texto[:10]
-
-        if self.var_data.get() != novo_texto:
-            self.var_data.set(novo_texto)
+        t = "".join(filter(str.isdigit, self.var_data.get()))
+        novo = t
+        if len(t) > 2:
+            novo = f"{t[:2]}/{t[2:]}"
+        if len(t) > 4:
+            novo = f"{t[:2]}/{t[2:4]}/{t[4:8]}"
+        if len(novo) > 10:
+            novo = novo[:10]
+        if self.var_data.get() != novo:
+            self.var_data.set(novo)
 
     def _formatar_tempo(self, *args):
-        texto_atual = self.var_tempo.get()
-        limpo = "".join(filter(str.isdigit, texto_atual))
-
-        novo_texto = limpo
-        if len(limpo) > 2:
-            novo_texto = f"{limpo[:2]}:{limpo[2:4]}"
-
-        if len(novo_texto) > 5:
-            novo_texto = novo_texto[:5]
-
-        if self.var_tempo.get() != novo_texto:
-            self.var_tempo.set(novo_texto)
+        t = "".join(filter(str.isdigit, self.var_tempo.get()))
+        novo = t
+        if len(t) > 2:
+            novo = f"{t[:2]}:{t[2:4]}"
+        if len(novo) > 5:
+            novo = novo[:5]
+        if self.var_tempo.get() != novo:
+            self.var_tempo.set(novo)
 
     def _limpar_campos(self):
         self.var_titulo.set("")
@@ -506,28 +471,25 @@ class App:
         self.var_nota.set(1)
 
     def _exportar(self, tipo):
-        caminho = filedialog.asksaveasfilename(defaultextension=f".{tipo}")
-        if not caminho:
+        c = filedialog.asksaveasfilename(defaultextension=f".{tipo}")
+        if not c:
             return
-
-        sucesso = False
-        if tipo == "pdf":
-            sucesso = Exportador.exportar_pdf(self.lista_jogos, caminho)
-        else:
-            sucesso = Exportador.exportar_excel(self.lista_jogos, caminho)
-
-        if sucesso:
+        if (
+            Exportador.exportar_pdf(self.lista_jogos, c)
+            if tipo == "pdf"
+            else Exportador.exportar_excel(self.lista_jogos, c)
+        ):
             messagebox.showinfo("Sucesso", "Exportação concluída!")
 
     def _importar_excel(self):
-        caminho = filedialog.askopenfilename()
-        if not caminho:
+        c = filedialog.askopenfilename()
+        if not c:
             return
-        novos = Exportador.importar_excel(caminho)
-        if novos:
-            self.lista_jogos.extend(novos)
+        n = Exportador.importar_excel(c)
+        if n:
+            self.lista_jogos.extend(n)
             self._limpar_filtros()
-            messagebox.showinfo("Sucesso", f"{len(novos)} jogos importados!")
+            messagebox.showinfo("Sucesso", f"{len(n)} jogos importados!")
 
     def _resetar_dados(self):
         if messagebox.askyesno("Cuidado", "Isso apagará TUDO. Continuar?"):

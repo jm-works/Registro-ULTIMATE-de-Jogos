@@ -3,7 +3,6 @@ from datetime import datetime
 
 
 def centralizar_janela(janela, largura, altura):
-    """Centraliza uma janela do Tkinter na tela."""
     janela.update_idletasks()
     largura_tela = janela.winfo_screenwidth()
     altura_tela = janela.winfo_screenheight()
@@ -24,8 +23,6 @@ def validar_campos(
         return "O campo 'Plataforma' é obrigatório! Onde você jogou?"
     if not estado.strip():
         return "O campo 'Forma de Zeramento' é obrigatório!"
-
-    # Se não for apenas planejado/desistência, exige dados de conclusão
     if estado not in ["Planejo Jogar", "Desistência"]:
         if not re.match(r"^\d{2}/\d{2}/\d{4}$", data_zeramento):
             return "A data de zeramento deve estar no formato DIA/MÊS/ANO."
@@ -55,7 +52,6 @@ def validar_campos(
 
 
 def calcular_total_minutos(tempo_jogado):
-    """Converte 'HH:MM' para total de minutos (int)."""
     if not tempo_jogado or ":" not in tempo_jogado:
         return 0
     try:

@@ -28,8 +28,9 @@ class App:
     def __init__(self, root):
         self.root = root
         self.root.title("Registro ULTIMATE de Jogos")
-        self.root.geometry("600x400")
-        self.root.resizable(False, False)
+
+        self.root.geometry("800x500")
+        self.root.resizable(True, True)
 
         self.dados = GerenciadorDados()
         self.estatisticas = GeradorGraficos()
@@ -70,9 +71,24 @@ class App:
     def atualizar_fundo(self):
         if os.path.exists(WALLPAPER_PATH) and os.path.exists(BACKGROUND_PATH):
             try:
+                largura = self.root.winfo_width()
+                altura = self.root.winfo_height()
+
+                if largura <= 1:
+                    largura = 800
+                if altura <= 1:
+                    altura = 500
+
                 wall = Image.open(WALLPAPER_PATH).convert("RGBA")
                 bg = Image.open(BACKGROUND_PATH).convert("RGBA")
-                wall = wall.resize(bg.size)
+
+                # Redimensiona para preencher a tela
+                wall = wall.resize((largura, altura), Image.LANCZOS)
+
+                # O Background (moldura) pode ser redimensionado ou centralizado.
+                # Aqui vamos redimensionar a moldura junto:
+                bg = bg.resize((largura, altura), Image.LANCZOS)
+
                 final = Image.alpha_composite(wall, bg)
                 self.bg_tk = ImageTk.PhotoImage(final)
 
@@ -157,6 +173,9 @@ class App:
         )
 
     def _criar_widgets(self):
+        self.root.columnconfigure(2, weight=1)
+        self.root.rowconfigure(8, weight=1)
+
         self._criar_campo(0, "Título*:", self.var_titulo)
 
         tk.Label(self.root, text="Gênero*:").grid(
@@ -167,7 +186,7 @@ class App:
             textvariable=self.var_genero,
             values=GENEROS,
             state="readonly",
-            width=17,
+            width=25,  # Aumentei largura
         )
         cb_gen.grid(row=1, column=1, sticky="w", padx=10)
 
@@ -175,7 +194,7 @@ class App:
             row=2, column=0, sticky="w", padx=10, pady=5
         )
         cb_plat = ttk.Combobox(
-            self.root, textvariable=self.var_plataforma, values=PLATAFORMAS, width=17
+            self.root, textvariable=self.var_plataforma, values=PLATAFORMAS, width=25
         )
         cb_plat.grid(row=2, column=1, sticky="w", padx=10)
 
@@ -190,7 +209,7 @@ class App:
             textvariable=self.var_forma,
             values=["História", "100%", "Platina", "Planejo Jogar", "Desistência"],
             state="readonly",
-            width=17,
+            width=25,
         )
         cb_forma.grid(row=4, column=1, sticky="w", padx=10)
         cb_forma.bind("<<ComboboxSelected>>", self._atualizar_campos_estado)
@@ -211,14 +230,15 @@ class App:
         btn_add = tk.Button(
             self.root, text="Adicionar Jogo", command=self.adicionar_jogo
         )
-        estilizar_botao(btn_add, "gray", largura=15, altura=1)
-        btn_add.grid(row=8, column=0, columnspan=2, pady=10)
+        estilizar_botao(btn_add, "gray", largura=20, altura=1)
+        btn_add.grid(row=8, column=0, columnspan=2, pady=15)
 
+        # Frame da Lista (Agora expansível)
         frame_lista = tk.Frame(self.root)
-        frame_lista.grid(row=0, column=2, rowspan=9, padx=10, pady=5, sticky="ns")
+        frame_lista.grid(row=0, column=2, rowspan=9, padx=10, pady=5, sticky="nsew")
 
         self.listbox = tk.Listbox(frame_lista, width=40, height=18)
-        self.listbox.pack(side="left", fill="both")
+        self.listbox.pack(side="left", fill="both", expand=True)
         sb = tk.Scrollbar(frame_lista, command=self.listbox.yview)
         sb.pack(side="right", fill="y")
         self.listbox.config(yscrollcommand=sb.set)
@@ -230,7 +250,7 @@ class App:
         tk.Label(self.root, text=texto).grid(
             row=row, column=0, sticky="w", padx=10, pady=5
         )
-        tk.Entry(self.root, textvariable=variavel).grid(
+        tk.Entry(self.root, textvariable=variavel, width=28).grid(
             row=row, column=1, sticky="w", padx=10
         )
 
@@ -312,7 +332,6 @@ class App:
 
             m = Menu(self.root, tearoff=0)
 
-            # Submenu Organizar
             menu_org = Menu(m, tearoff=0)
             menu_org.add_command(
                 label="Título (A-Z)", command=lambda: self._ordenar("titulo")
@@ -360,7 +379,6 @@ class App:
             )
         elif criterio == "plataforma":
             self.lista_jogos.sort(key=lambda x: x["Plataforma"].lower())
-
         self._limpar_filtros()
 
     def _copiar_nome(self):

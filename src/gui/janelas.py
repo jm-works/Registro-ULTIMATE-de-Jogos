@@ -13,9 +13,9 @@ class JanelaChecklist:
     def __init__(self, root, gerenciador_dados):
         self.top = tk.Toplevel(root)
         self.top.title("Tarefas")
-        self.top.geometry("500x500")
-        self.top.resizable(False, False)
-        centralizar_janela(self.top, 500, 500)
+        self.top.geometry("500x600")
+        self.top.resizable(True, True)
+        centralizar_janela(self.top, 500, 600)
 
         self.dados = gerenciador_dados
         self.tarefas = self.dados.carregar_tarefas()
@@ -75,7 +75,7 @@ class JanelaChecklist:
 
             status_icon = "🏆" if completo else "📝"
             if not missoes:
-                status_icon = "📂"  # Ícone para pasta vazia
+                status_icon = "📂"
 
             total = len(missoes)
             feitos = len([m for m in missoes if m.get("concluido", False)])
@@ -122,14 +122,13 @@ class JanelaMissoes:
     def __init__(self, parent, tarefa, callback_salvar):
         self.top = tk.Toplevel(parent)
         self.top.title(f"Missões: {tarefa['nome']}")
-        self.top.geometry("450x500")
-        self.top.resizable(False, False)
-        centralizar_janela(self.top, 450, 500)
+        self.top.geometry("450x550")
+        self.top.resizable(True, True)
+        centralizar_janela(self.top, 450, 550)
 
         self.tarefa = tarefa
         self.callback_salvar = callback_salvar
 
-        # Garante que a lista de missões existe
         if "missoes" not in self.tarefa:
             self.tarefa["missoes"] = []
 
@@ -142,7 +141,6 @@ class JanelaMissoes:
             font=("Arial", 14, "bold"),
         ).pack(pady=10)
 
-        # Entrada
         frame_input = tk.Frame(self.top)
         frame_input.pack(pady=5)
 
@@ -153,7 +151,6 @@ class JanelaMissoes:
         estilizar_botao(btn_add, "gray", largura=10, altura=1)
         btn_add.grid(row=0, column=1, padx=5)
 
-        # Lista
         frame_lista = tk.Frame(self.top)
         frame_lista.pack(pady=10, fill="both", expand=True)
 
@@ -227,7 +224,7 @@ class JanelaResumo:
         self.top = tk.Toplevel(root)
         self.top.title("Resumo Geral")
         self.top.geometry("590x650")
-        self.top.resizable(False, False)
+        self.top.resizable(True, True)
         centralizar_janela(self.top, 590, 650)
 
         self.jogos = lista_jogos
@@ -314,8 +311,8 @@ class JanelaWallpaper:
     def _abrir_editor(self):
         self.top = tk.Toplevel(self.root)
         self.top.title("Editar Wallpaper")
-        self.top.geometry("850x650")
-        centralizar_janela(self.top, 850, 650)
+        self.top.geometry("900x700")
+        centralizar_janela(self.top, 900, 700)
 
         self.img_orig = Image.open(self.caminho_imagem)
         fator = min(800 / self.img_orig.width, 550 / self.img_orig.height)
@@ -331,13 +328,13 @@ class JanelaWallpaper:
         self.canvas.create_image(0, 0, anchor="nw", image=self.img_tk)
 
         btn = tk.Button(
-            self.top, text="Salvar (Recorte Automático Centro)", command=self._salvar
+            self.top, text="Salvar (Recorte Automático 800x500)", command=self._salvar
         )
-        estilizar_botao(btn, "#27AE60")
+        estilizar_botao(btn, "#27AE60", largura=30)
         btn.pack(pady=10)
 
     def _salvar(self):
-        target = self.img_orig.resize((600, 400), Image.LANCZOS)
+        target = self.img_orig.resize((800, 500), Image.LANCZOS)
 
         os.makedirs(os.path.dirname(WALLPAPER_PATH), exist_ok=True)
         target.save(WALLPAPER_PATH, "PNG")

@@ -1,0 +1,40 @@
+# --- Python Padrão ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Ambientes Virtuais (uv / venv) ---
+.venv/
+venv/
+env/
+.env
+
+# --- Distribuição e Builds ---
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# --- IDEs e Editores ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- Sistema Operacional ---
+.DS_Store
+Thumbs.db
+
+# --- Específico do Projeto ---
+
+# Ignorar os dados do usuário (saves), mas manter a pasta
+saves/*.json
+!saves/.gitkeep
+
+# Ignorar arquivos exportados (para não sujar o repositório com PDFs/Excel gerados)
+export/*.pdf
+export/*.xlsx
+export/*.csv
+
+# Logs de erros (se houver)
+*.log

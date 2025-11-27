@@ -30,16 +30,6 @@
         "Nota": 8
     },
     {
-        "Título": "Kurohyō: Ryū ga Gotoku Shinshō",
-        "Gênero": "Action-Adventure",
-        "Plataforma": "PlayStation Portable",
-        "Data de Zeramento": "",
-        "Forma de Zeramento": "Planejo Jogar",
-        "Descrição de Zeramento": "Yakuza de PSP, não tem como ser ruim.",
-        "Tempo Jogado": "",
-        "Nota": null
-    },
-    {
         "Título": "Deponia: The Complete Journey",
         "Gênero": "Point and Click",
         "Plataforma": "PC",
@@ -48,5 +38,15 @@
         "Descrição de Zeramento": "Jogo divertido mas é impossivel jogar sem um guia",
         "Tempo Jogado": "45:50",
         "Nota": 7
+    },
+    {
+        "Título": "Kurohyō: Ryū ga Gotoku Shinshō",
+        "Gênero": "Action-Adventure",
+        "Plataforma": "PlayStation Portable",
+        "Data de Zeramento": "",
+        "Forma de Zeramento": "Planejo Jogar",
+        "Descrição de Zeramento": "Yakuza de PSP, não tem como ser ruim.",
+        "Tempo Jogado": "",
+        "Nota": null
     }
 ]

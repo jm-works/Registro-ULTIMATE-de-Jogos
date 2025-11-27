@@ -27,55 +27,64 @@ class JanelaChecklist:
             self.top, text="Checklist de Tarefas", font=("Arial", 16, "bold")
         ).pack(pady=10)
 
-        # Frame Lista
         frame_lista = tk.Frame(self.top)
         frame_lista.pack(pady=10, fill="both", expand=True)
 
-        self.listbox = tk.Listbox(frame_lista, width=50, height=15)
+        self.listbox = tk.Listbox(frame_lista, width=50, height=15, font=("Arial", 11))
         self.listbox.pack(side="left", fill="both", expand=True, padx=10)
 
         sb = ttk.Scrollbar(frame_lista, orient="vertical", command=self.listbox.yview)
         self.listbox.configure(yscrollcommand=sb.set)
         sb.pack(side="right", fill="y")
 
-        # Frame Ações
         frame_acoes = tk.Frame(self.top)
         frame_acoes.pack(pady=10)
 
         tk.Label(frame_acoes, text="Nova Tarefa:").grid(row=0, column=0, padx=5)
-        self.entry_tarefa = tk.Entry(frame_acoes, width=30)
+        self.entry_tarefa = tk.Entry(frame_acoes, width=25)
         self.entry_tarefa.grid(row=0, column=1, padx=5)
 
         btn_add = tk.Button(
             frame_acoes, text="Adicionar", command=self.adicionar_tarefa
         )
-        estilizar_botao(btn_add, "gray", largura=15, altura=1)
+        estilizar_botao(btn_add, "gray", largura=12, altura=1)
         btn_add.grid(row=0, column=2, padx=5)
 
-        btn_del = tk.Button(frame_acoes, text="Excluir", command=self.excluir_tarefa)
-        estilizar_botao(btn_del, "#f44336", largura=15, altura=1)
-        btn_del.grid(row=1, column=2, padx=5)
+        frame_botoes = tk.Frame(self.top)
+        frame_botoes.pack(pady=10)
 
         btn_ger = tk.Button(
-            frame_acoes, text="Gerenciar Missões", command=self.gerenciar_missoes
+            frame_botoes, text="Gerenciar Missões", command=self.gerenciar_missoes
         )
-        estilizar_botao(btn_ger, "#808080", largura=15, altura=1)
-        btn_ger.grid(row=2, column=0, columnspan=3, pady=10)
+        estilizar_botao(btn_ger, "#4a90e2", largura=20, altura=1)
+        btn_ger.grid(row=0, column=0, padx=10)
+
+        btn_del = tk.Button(
+            frame_botoes, text="Excluir Tarefa", command=self.excluir_tarefa
+        )
+        estilizar_botao(btn_del, "#f44336", largura=20, altura=1)
+        btn_del.grid(row=0, column=1, padx=10)
 
         self.atualizar_lista()
 
     def atualizar_lista(self):
         self.listbox.delete(0, tk.END)
         for t in self.tarefas:
-            status = (
-                "✔"
-                if t["missoes"] and all(m["concluido"] for m in t["missoes"])
-                else "✘"
-            )
-            self.listbox.insert(tk.END, f"{status} {t['nome']}")
+            missoes = t.get("missoes", [])
+            completo = missoes and all(m.get("concluido", False) for m in missoes)
+
+            status_icon = "🏆" if completo else "📝"
+            if not missoes:
+                status_icon = "📂"  # Ícone para pasta vazia
+
+            total = len(missoes)
+            feitos = len([m for m in missoes if m.get("concluido", False)])
+            progresso = f"({feitos}/{total})" if total > 0 else ""
+
+            self.listbox.insert(tk.END, f"{status_icon} {t['nome']} {progresso}")
 
     def adicionar_tarefa(self):
-        nome = self.entry_tarefa.get()
+        nome = self.entry_tarefa.get().strip()
         if nome:
             self.tarefas.append({"nome": nome, "missoes": []})
             self.dados.salvar_tarefas(self.tarefas)
@@ -86,7 +95,9 @@ class JanelaChecklist:
         sel = self.listbox.curselection()
         if not sel:
             return
-        if messagebox.askyesno("Confirmar", "Excluir esta tarefa?"):
+        if messagebox.askyesno(
+            "Confirmar", "Excluir esta tarefa e todas as suas missões?"
+        ):
             self.tarefas.pop(sel[0])
             self.dados.salvar_tarefas(self.tarefas)
             self.atualizar_lista()
@@ -94,13 +105,121 @@ class JanelaChecklist:
     def gerenciar_missoes(self):
         sel = self.listbox.curselection()
         if not sel:
-            messagebox.showerror("Erro", "Selecione uma tarefa.")
+            messagebox.showerror("Erro", "Selecione uma tarefa primeiro.")
             return
 
-        messagebox.showinfo(
-            "Em Breve",
-            "Funcionalidade de missões detalhadas em manutenção na refatoração.",
+        index = sel[0]
+        tarefa_selecionada = self.tarefas[index]
+
+        def salvar_callback():
+            self.dados.salvar_tarefas(self.tarefas)
+            self.atualizar_lista()
+
+        JanelaMissoes(self.top, tarefa_selecionada, salvar_callback)
+
+
+class JanelaMissoes:
+    def __init__(self, parent, tarefa, callback_salvar):
+        self.top = tk.Toplevel(parent)
+        self.top.title(f"Missões: {tarefa['nome']}")
+        self.top.geometry("450x500")
+        self.top.resizable(False, False)
+        centralizar_janela(self.top, 450, 500)
+
+        self.tarefa = tarefa
+        self.callback_salvar = callback_salvar
+
+        # Garante que a lista de missões existe
+        if "missoes" not in self.tarefa:
+            self.tarefa["missoes"] = []
+
+        self._criar_interface()
+
+    def _criar_interface(self):
+        tk.Label(
+            self.top,
+            text=f"Missões de {self.tarefa['nome']}",
+            font=("Arial", 14, "bold"),
+        ).pack(pady=10)
+
+        # Entrada
+        frame_input = tk.Frame(self.top)
+        frame_input.pack(pady=5)
+
+        self.entry_missao = tk.Entry(frame_input, width=30)
+        self.entry_missao.grid(row=0, column=0, padx=5)
+
+        btn_add = tk.Button(frame_input, text="Adicionar", command=self.adicionar)
+        estilizar_botao(btn_add, "gray", largura=10, altura=1)
+        btn_add.grid(row=0, column=1, padx=5)
+
+        # Lista
+        frame_lista = tk.Frame(self.top)
+        frame_lista.pack(pady=10, fill="both", expand=True)
+
+        self.listbox = tk.Listbox(frame_lista, width=50, height=15, font=("Arial", 11))
+        self.listbox.pack(side="left", fill="both", expand=True, padx=10)
+
+        sb = ttk.Scrollbar(frame_lista, orient="vertical", command=self.listbox.yview)
+        self.listbox.configure(yscrollcommand=sb.set)
+        sb.pack(side="right", fill="y")
+
+        self.listbox.bind("<Double-Button-1>", self.toggle_missao)
+
+        # Botões
+        frame_btns = tk.Frame(self.top)
+        frame_btns.pack(pady=10)
+
+        btn_toggle = tk.Button(
+            frame_btns, text="Concluir / Reabrir", command=self.toggle_missao
         )
+        estilizar_botao(btn_toggle, "#27AE60", largura=18, altura=1)
+        btn_toggle.grid(row=0, column=0, padx=5)
+
+        btn_del = tk.Button(frame_btns, text="Remover Missão", command=self.remover)
+        estilizar_botao(btn_del, "#e74c3c", largura=18, altura=1)
+        btn_del.grid(row=0, column=1, padx=5)
+
+        self.atualizar_lista()
+
+    def atualizar_lista(self):
+        self.listbox.delete(0, tk.END)
+        for m in self.tarefa["missoes"]:
+            status = "☑" if m.get("concluido") else "☐"
+            texto = m.get("descricao", "")
+            self.listbox.insert(tk.END, f"{status} {texto}")
+
+    def adicionar(self):
+        texto = self.entry_missao.get().strip()
+        if texto:
+            self.tarefa["missoes"].append({"descricao": texto, "concluido": False})
+            self.callback_salvar()
+            self.atualizar_lista()
+            self.entry_missao.delete(0, tk.END)
+
+    def toggle_missao(self, event=None):
+        sel = self.listbox.curselection()
+        if not sel:
+            return
+
+        idx = sel[0]
+        estado_atual = self.tarefa["missoes"][idx].get("concluido", False)
+        self.tarefa["missoes"][idx]["concluido"] = not estado_atual
+
+        self.callback_salvar()
+        self.atualizar_lista()
+
+        self.listbox.selection_set(idx)
+
+    def remover(self):
+        sel = self.listbox.curselection()
+        if not sel:
+            return
+
+        idx = sel[0]
+        self.tarefa["missoes"].pop(idx)
+        self.callback_salvar()
+        self.atualizar_lista()
 
 
 class JanelaResumo:

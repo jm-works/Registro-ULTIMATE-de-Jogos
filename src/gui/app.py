@@ -39,7 +39,6 @@ class App:
 
         self._inicializar_variaveis()
 
-        # Configuração Visual
         self._carregar_assets()
         self._criar_menu()
         self._criar_widgets()
@@ -181,7 +180,7 @@ class App:
         cb_plat.grid(row=2, column=1, sticky="w", padx=10)
 
         self._criar_campo(3, "Data Zeramento:", self.var_data)
-        self.var_data.trace_add("write", self._formatar_data)  # Auto-formatação
+        self.var_data.trace_add("write", self._formatar_data)
 
         tk.Label(self.root, text="Estado*:").grid(
             row=4, column=0, sticky="w", padx=10, pady=5
@@ -225,7 +224,7 @@ class App:
         self.listbox.config(yscrollcommand=sb.set)
 
         self.listbox.bind("<Double-Button-1>", self.mostrar_info_jogo)
-        self.listbox.bind("<Button-3>", self._abrir_menu_contexto)  # Botão direito
+        self.listbox.bind("<Button-3>", self._abrir_menu_contexto)
 
     def _criar_campo(self, row, texto, variavel):
         tk.Label(self.root, text=texto).grid(
@@ -312,12 +311,64 @@ class App:
             self.listbox.selection_set(index)
 
             m = Menu(self.root, tearoff=0)
+
+            # Submenu Organizar
+            menu_org = Menu(m, tearoff=0)
+            menu_org.add_command(
+                label="Título (A-Z)", command=lambda: self._ordenar("titulo")
+            )
+            menu_org.add_command(
+                label="Nota (Maior-Menor)", command=lambda: self._ordenar("nota")
+            )
+            menu_org.add_command(
+                label="Data (Recente-Antiga)", command=lambda: self._ordenar("data")
+            )
+            menu_org.add_command(
+                label="Plataforma (A-Z)", command=lambda: self._ordenar("plataforma")
+            )
+            m.add_cascade(label="Organizar Lista", menu=menu_org)
+
+            m.add_separator()
+            m.add_command(label="Copiar Nome", command=self._copiar_nome)
             m.add_command(label="Pesquisar no Google", command=self._pesquisar_google)
+            m.add_separator()
             m.add_command(label="Editar", command=self._editar_jogo_selecionado)
             m.add_command(label="Excluir", command=self._excluir_jogo_selecionado)
+            m.add_separator()
+            m.add_command(label="Filtrar...", command=self._abrir_janela_filtro)
+            m.add_command(label="Limpar Filtros", command=self._limpar_filtros)
+
             m.post(event.x_root, event.y_root)
         except Exception:
             pass
+
+    def _ordenar(self, criterio):
+        if criterio == "titulo":
+            self.lista_jogos.sort(key=lambda x: x["Título"].lower())
+        elif criterio == "nota":
+            self.lista_jogos.sort(
+                key=lambda x: float(x["Nota"]) if x["Nota"] else 0, reverse=True
+            )
+        elif criterio == "data":
+            self.lista_jogos.sort(
+                key=lambda x: (
+                    datetime.strptime(x["Data de Zeramento"], "%d/%m/%Y")
+                    if x.get("Data de Zeramento")
+                    else datetime.min
+                ),
+                reverse=True,
+            )
+        elif criterio == "plataforma":
+            self.lista_jogos.sort(key=lambda x: x["Plataforma"].lower())
+
+        self._limpar_filtros()
+
+    def _copiar_nome(self):
+        sel = self.listbox.curselection()
+        if not sel:
+            return
+        jogo = self.jogos_visualizados[sel[0]]
+        pyperclip.copy(jogo["Título"])
 
     def _pesquisar_google(self):
         sel = self.listbox.curselection()
@@ -343,26 +394,28 @@ class App:
         sel = self.listbox.curselection()
         if not sel:
             return
-        jogo = self.jogos_visualizados[sel[0]]
 
-        if messagebox.askyesno(
-            "Editar",
-            "Isso carregará os dados para o formulário e removerá o registro atual para que você salve novamente. Continuar?",
-        ):
-            self.var_titulo.set(jogo["Título"])
-            self.var_genero.set(jogo["Gênero"])
-            self.var_plataforma.set(jogo["Plataforma"])
-            self.var_data.set(jogo.get("Data de Zeramento", ""))
-            self.var_forma.set(jogo["Forma de Zeramento"])
-            self.var_desc.set(jogo.get("Descrição de Zeramento", ""))
-            self.var_tempo.set(jogo.get("Tempo Jogado", ""))
-            try:
-                self.var_nota.set(float(jogo["Nota"]))
-            except:
-                self.var_nota.set(1)
+        jogo_visual = self.jogos_visualizados[sel[0]]
 
-            self.lista_jogos.remove(jogo)
-            self._limpar_filtros()
+        if jogo_visual in self.lista_jogos:
+            msg = "Deseja editar este jogo?\n\nO jogo será removido da lista e os dados voltarão para o formulário.\nVocê precisará clicar em 'Adicionar Jogo' novamente para salvar as alterações."
+            if messagebox.askyesno("Editar Jogo", msg):
+                self.var_titulo.set(jogo_visual["Título"])
+                self.var_genero.set(jogo_visual["Gênero"])
+                self.var_plataforma.set(jogo_visual["Plataforma"])
+                self.var_data.set(jogo_visual.get("Data de Zeramento", ""))
+                self.var_forma.set(jogo_visual["Forma de Zeramento"])
+                self.var_desc.set(jogo_visual.get("Descrição de Zeramento", ""))
+                self.var_tempo.set(jogo_visual.get("Tempo Jogado", ""))
+                try:
+                    self.var_nota.set(float(jogo_visual["Nota"]))
+                except:
+                    self.var_nota.set(1)
+
+                self._atualizar_campos_estado()
+
+                self.lista_jogos.remove(jogo_visual)
+                self._limpar_filtros()
 
     def _abrir_janela_filtro(self):
         top = tk.Toplevel(self.root)
@@ -396,20 +449,34 @@ class App:
             self.slider_nota.config(state="normal")
 
     def _formatar_data(self, *args):
-        t = self.var_data.get()
-        t = "".join(filter(str.isdigit, t))
-        if len(t) > 8:
-            t = t[:8]
-        if len(t) >= 2:
-            t = t[:2] + "/" + t[2:]
-        if len(t) >= 5:
-            t = t[:5] + "/" + t[5:]
-        if self.var_data.get() != t:
-            self.var_data.set(t)
+        texto_atual = self.var_data.get()
+        limpo = "".join(filter(str.isdigit, texto_atual))
+
+        novo_texto = limpo
+        if len(limpo) > 2:
+            novo_texto = f"{limpo[:2]}/{limpo[2:]}"
+        if len(limpo) > 4:
+            novo_texto = f"{limpo[:2]}/{limpo[2:4]}/{limpo[4:8]}"
+
+        if len(novo_texto) > 10:
+            novo_texto = novo_texto[:10]
+
+        if self.var_data.get() != novo_texto:
+            self.var_data.set(novo_texto)
 
     def _formatar_tempo(self, *args):
-        t = self.var_tempo.get().replace(" ", "")
-        pass
+        texto_atual = self.var_tempo.get()
+        limpo = "".join(filter(str.isdigit, texto_atual))
+
+        novo_texto = limpo
+        if len(limpo) > 2:
+            novo_texto = f"{limpo[:2]}:{limpo[2:4]}"
+
+        if len(novo_texto) > 5:
+            novo_texto = novo_texto[:5]
+
+        if self.var_tempo.get() != novo_texto:
+            self.var_tempo.set(novo_texto)
 
     def _limpar_campos(self):
         self.var_titulo.set("")
@@ -420,7 +487,6 @@ class App:
         self.var_data.set("")
         self.var_nota.set(1)
 
-    # --- Persistência ---
     def _exportar(self, tipo):
         caminho = filedialog.asksaveasfilename(defaultextension=f".{tipo}")
         if not caminho:

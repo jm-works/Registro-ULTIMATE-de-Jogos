@@ -220,7 +220,8 @@ class App:
             self.root, text="Adicionar Jogo", command=self.adicionar_jogo
         )
         estilizar_botao(btn_add, "gray", largura=15, altura=1)
-        btn_add.grid(row=8, column=0, columnspan=2, pady=10)
+        # btn_add.grid(row=8, column=0, columnspan=2, pady=10)
+        btn_add.place(x=90, y=280)
 
         frame_lista = tk.Frame(self.root)
 
@@ -245,7 +246,6 @@ class App:
             row=row, column=1, sticky="w", padx=10
         )
 
-    # --- Lógica ---
     def adicionar_jogo(self):
         erro = validar_campos(
             self.var_titulo.get(),

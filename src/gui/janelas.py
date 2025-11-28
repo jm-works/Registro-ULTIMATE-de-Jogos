@@ -3,6 +3,8 @@ from tkinter import ttk, messagebox, filedialog
 from tkinter import font as tkFont
 from PIL import Image, ImageTk
 import os
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from src.utils import centralizar_janela, calcular_total_minutos
 from src.constantes import WALLPAPER_PATH, ASSETS_DIR
@@ -221,80 +223,175 @@ class JanelaMissoes:
 class JanelaResumo:
     def __init__(self, root, lista_jogos):
         self.top = tk.Toplevel(root)
-        self.top.title("Resumo Geral")
-        self.top.geometry("590x650")
+        self.top.title("Dashboard de Resumo")
+        self.top.geometry("900x650")
         self.top.resizable(True, True)
-        centralizar_janela(self.top, 590, 650)
+        centralizar_janela(self.top, 900, 650)
+
+        self.bg_color = "#1e1e1e"
+        self.card_bg = "#2d2d2d"
+        self.text_color = "#ffffff"
+        self.accent_color = "#4a90e2"
+        self.top.configure(bg=self.bg_color)
 
         self.jogos = lista_jogos
+        self.zerados = [j for j in self.jogos if j.get("Data de Zeramento")]
+
+        self._calcular_dados()
         self._criar_interface()
 
-    def _criar_interface(self):
-        canvas = tk.Canvas(self.top, bg="black", width=570)
-        sb = ttk.Scrollbar(self.top, orient="vertical", command=canvas.yview)
-        scroll_frame = tk.Frame(canvas, bg="black")
+    def _calcular_dados(self):
+        self.total_zerados = len(self.zerados)
+        self.total_jogos = len(self.jogos)
 
-        scroll_frame.bind(
-            "<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        minutos_totais = sum(
+            calcular_total_minutos(j.get("Tempo Jogado", "0:00")) for j in self.zerados
         )
-        canvas.create_window((0, 0), window=scroll_frame, anchor="nw")
-        canvas.configure(yscrollcommand=sb.set)
+        self.horas_totais = minutos_totais // 60
 
-        canvas.pack(side="left", fill="both", expand=True)
-        sb.pack(side="right", fill="y")
+        notas = [float(j["Nota"]) for j in self.zerados if j.get("Nota")]
+        self.media_notas = sum(notas) / len(notas) if notas else 0.0
 
-        zerados = [j for j in self.jogos if j.get("Data de Zeramento")]
-        desistidos = [
-            j for j in self.jogos if j.get("Forma de Zeramento") == "Desistência"
-        ]
-        planejados = [
-            j for j in self.jogos if j.get("Forma de Zeramento") == "Planejo Jogar"
-        ]
+        generos = [j["Gênero"] for j in self.zerados]
+        self.top_genero = max(set(generos), key=generos.count) if generos else "N/A"
 
-        notas = [float(j["Nota"]) for j in zerados if j.get("Nota")]
-        media = sum(notas) / len(notas) if notas else 0
+        self.top_5_jogos = sorted(
+            self.zerados,
+            key=lambda x: float(x["Nota"]) if x.get("Nota") else 0,
+            reverse=True,
+        )[:5]
 
-        fonte_tit = tkFont.Font(family="Arial", size=16, weight="bold")
-        fonte_txt = tkFont.Font(family="Arial", size=14)
+    def _criar_interface(self):
+        lbl_titulo = tk.Label(
+            self.top,
+            text="Visão Geral da Biblioteca",
+            font=("Arial", 20, "bold"),
+            bg=self.bg_color,
+            fg=self.text_color,
+        )
+        lbl_titulo.pack(pady=(15, 20))
 
-        lbls = [
-            ("Resumo Geral", fonte_tit),
-            (f"Jogos Zerados: {len(zerados)}", fonte_txt),
-            (f"Jogos Desistidos: {len(desistidos)}", fonte_txt),
-            (f"Jogos Planejados: {len(planejados)}", fonte_txt),
-            (f"Média de Notas (Zerados): {media:.2f}", fonte_txt),
-            ("Resumo por Gêneros:", fonte_tit),
-        ]
+        main_frame = tk.Frame(self.top, bg=self.bg_color)
+        main_frame.pack(fill="both", expand=True, padx=20, pady=10)
 
-        for txt, fonte in lbls:
-            tk.Label(scroll_frame, text=txt, font=fonte, bg="black", fg="white").pack(
-                pady=5
+        frame_cards = tk.Frame(main_frame, bg=self.bg_color)
+        frame_cards.pack(fill="x", pady=10)
+
+        self._criar_card(frame_cards, "Jogos Zerados", f"{self.total_zerados}", "🏆", 0)
+        self._criar_card(frame_cards, "Tempo Total", f"{self.horas_totais}h", "⏳", 1)
+        self._criar_card(frame_cards, "Média Notas", f"{self.media_notas:.2f}", "⭐", 2)
+        self._criar_card(frame_cards, "Gênero Favorito", f"{self.top_genero}", "🎮", 3)
+
+        content_frame = tk.Frame(main_frame, bg=self.bg_color)
+        content_frame.pack(fill="both", expand=True, pady=10)
+
+        left_frame = tk.Frame(content_frame, bg=self.card_bg, padx=10, pady=10)
+        left_frame.pack(side="left", fill="both", expand=True, padx=(0, 10))
+
+        tk.Label(
+            left_frame,
+            text="Distribuição de Status",
+            font=("Arial", 12, "bold"),
+            bg=self.card_bg,
+            fg=self.text_color,
+        ).pack(pady=5)
+
+        self._criar_grafico_pizza(left_frame)
+
+        # Lado Direito: Top 5 Melhores Jogos
+        right_frame = tk.Frame(content_frame, bg=self.card_bg, padx=10, pady=10)
+        right_frame.pack(side="right", fill="both", expand=True, padx=(10, 0))
+
+        tk.Label(
+            right_frame,
+            text="Top 5 - Melhores Avaliados",
+            font=("Arial", 12, "bold"),
+            bg=self.card_bg,
+            fg=self.text_color,
+        ).pack(pady=5)
+
+        self._criar_tabela_top5(right_frame)
+
+    def _criar_card(self, parent, titulo, valor, icone, col_index):
+        card = tk.Frame(parent, bg=self.card_bg, relief="flat", bd=1)
+        card.grid(row=0, column=col_index, padx=10, sticky="ew")
+        parent.grid_columnconfigure(col_index, weight=1)
+
+        tk.Label(
+            card, text=icone, font=("Arial", 24), bg=self.card_bg, fg=self.accent_color
+        ).pack(pady=(10, 0))
+        tk.Label(
+            card,
+            text=valor,
+            font=("Arial", 18, "bold"),
+            bg=self.card_bg,
+            fg=self.text_color,
+        ).pack()
+        tk.Label(
+            card, text=titulo, font=("Arial", 10), bg=self.card_bg, fg="#aaaaaa"
+        ).pack(pady=(0, 10))
+
+    def _criar_grafico_pizza(self, parent):
+        status_counts = {}
+        for j in self.jogos:
+            s = j["Forma de Zeramento"]
+            status_counts[s] = status_counts.get(s, 0) + 1
+
+        labels = list(status_counts.keys())
+        sizes = list(status_counts.values())
+        colors = ["#4a90e2", "#2ecc71", "#f1c40f", "#e74c3c", "#95a5a6"]
+
+        fig, ax = plt.subplots(figsize=(4, 3), dpi=100)
+        fig.patch.set_facecolor(self.card_bg)
+        ax.set_facecolor(self.card_bg)
+
+        wedges, texts, autotexts = ax.pie(
+            sizes,
+            labels=labels,
+            autopct="%1.1f%%",
+            startangle=90,
+            colors=colors[: len(labels)],
+        )
+
+        plt.setp(texts, color="white")
+        plt.setp(autotexts, size=8, weight="bold", color="white")
+
+        canvas = FigureCanvasTkAgg(fig, master=parent)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="both", expand=True)
+
+    def _criar_tabela_top5(self, parent):
+        style = ttk.Style()
+        style.theme_use("clam")
+        style.configure(
+            "Treeview",
+            background=self.bg_color,
+            foreground="white",
+            fieldbackground=self.bg_color,
+            rowheight=25,
+        )
+        style.map("Treeview", background=[("selected", self.accent_color)])
+        style.configure(
+            "Treeview.Heading", background="#444", foreground="white", relief="flat"
+        )
+
+        cols = ("Jogo", "Nota", "Plat.")
+        tree = ttk.Treeview(parent, columns=cols, show="headings", height=8)
+
+        tree.heading("Jogo", text="Nome do Jogo")
+        tree.heading("Nota", text="Nota")
+        tree.heading("Plat.", text="Plataforma")
+
+        tree.column("Jogo", width=150)
+        tree.column("Nota", width=50, anchor="center")
+        tree.column("Plat.", width=80, anchor="center")
+
+        for jogo in self.top_5_jogos:
+            tree.insert(
+                "", "end", values=(jogo["Título"], jogo["Nota"], jogo["Plataforma"])
             )
 
-        self._criar_tabela_generos(scroll_frame, zerados)
-
-    def _criar_tabela_generos(self, parent, zerados):
-        cols = ("Genero", "Qtd", "Tempo (h)")
-        tree = ttk.Treeview(parent, columns=cols, show="headings", height=5)
-        for c in cols:
-            tree.heading(c, text=c)
-        tree.column("Genero", width=200)
-        tree.column("Qtd", width=80)
-        tree.column("Tempo (h)", width=100)
-
-        contagem = {}
-        for j in zerados:
-            g = j["Gênero"]
-            t = calcular_total_minutos(j.get("Tempo Jogado", "0:00"))
-            if g not in contagem:
-                contagem[g] = {"qtd": 0, "tempo": 0}
-            contagem[g]["qtd"] += 1
-            contagem[g]["tempo"] += t
-
-        for g, d in contagem.items():
-            tree.insert("", "end", values=(g, d["qtd"], f"{d['tempo']//60}h"))
-
-        tree.pack(pady=5)
+        tree.pack(fill="both", expand=True, pady=10)
 
 
 class JanelaWallpaper:

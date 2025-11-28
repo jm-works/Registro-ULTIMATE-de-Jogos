@@ -7,17 +7,81 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from src.utils import centralizar_janela, calcular_total_minutos
-from src.constantes import WALLPAPER_PATH, ASSETS_DIR
+from src.constantes import WALLPAPER_PATH
 from src.gui.componentes import estilizar_botao
+
+
+class ScrollableFrame(tk.Frame):
+    def __init__(self, parent, bg_color="#1e1e1e", *args, **kwargs):
+        super().__init__(parent, bg=bg_color, *args, **kwargs)
+
+        self.canvas = tk.Canvas(self, bg=bg_color, highlightthickness=0)
+        self.scrollbar = ttk.Scrollbar(
+            self, orient="vertical", command=self.canvas.yview
+        )
+        self.scrollable_frame = tk.Frame(self.canvas, bg=bg_color)
+
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")),
+        )
+
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.scrollbar.pack(side="right", fill="y")
+
+        self.canvas.bind("<Enter>", self._bound_to_mousewheel)
+        self.canvas.bind("<Leave>", self._unbound_to_mousewheel)
+        self.bind("<Destroy>", self._on_destroy)
+
+    def _bound_to_mousewheel(self, event):
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+
+    def _unbound_to_mousewheel(self, event):
+        self.canvas.unbind_all("<MouseWheel>")
+
+    def _on_destroy(self, event):
+        try:
+            self.canvas.unbind_all("<MouseWheel>")
+        except:
+            pass
+
+    def _on_mousewheel(self, event):
+        try:
+            start, end = self.canvas.yview()
+
+            if start <= 0.0 and end >= 1.0:
+                return
+
+            delta = int(-1 * (event.delta / 120))
+
+            if delta < 0 and start <= 0.0:
+                return
+
+            if delta > 0 and end >= 1.0:
+                return
+
+            self.canvas.yview_scroll(delta, "units")
+        except tk.TclError:
+            pass
 
 
 class JanelaChecklist:
     def __init__(self, root, gerenciador_dados):
         self.top = tk.Toplevel(root)
-        self.top.title("Tarefas")
-        self.top.geometry("500x600")
-        self.top.resizable(True, True)
-        centralizar_janela(self.top, 500, 600)
+        self.top.title("Gerenciador de Tarefas")
+        self.top.geometry("550x700")
+        centralizar_janela(self.top, 550, 700)
+
+        self.bg_color = "#1e1e1e"
+        self.card_bg = "#2d2d2d"
+        self.text_color = "#ffffff"
+        self.accent_color = "#4a90e2"
+        self.success_color = "#27AE60"
+
+        self.top.configure(bg=self.bg_color)
 
         self.dados = gerenciador_dados
         self.tarefas = self.dados.carregar_tarefas()
@@ -26,197 +90,334 @@ class JanelaChecklist:
 
     def _criar_interface(self):
         tk.Label(
-            self.top, text="Checklist de Tarefas", font=("Arial", 16, "bold")
-        ).pack(pady=10)
+            self.top,
+            text="Meus Projetos & Tarefas",
+            font=("Arial", 18, "bold"),
+            bg=self.bg_color,
+            fg=self.text_color,
+        ).pack(pady=(20, 10))
 
-        frame_lista = tk.Frame(self.top)
-        frame_lista.pack(pady=10, fill="both", expand=True)
+        frame_add = tk.Frame(self.top, bg=self.bg_color)
+        frame_add.pack(pady=10, fill="x", padx=20)
 
-        self.listbox = tk.Listbox(frame_lista, width=50, height=15, font=("Arial", 11))
-        self.listbox.pack(side="left", fill="both", expand=True, padx=10)
-
-        sb = ttk.Scrollbar(frame_lista, orient="vertical", command=self.listbox.yview)
-        self.listbox.configure(yscrollcommand=sb.set)
-        sb.pack(side="right", fill="y")
-
-        frame_acoes = tk.Frame(self.top)
-        frame_acoes.pack(pady=10)
-
-        tk.Label(frame_acoes, text="Nova Tarefa:").grid(row=0, column=0, padx=5)
-        self.entry_tarefa = tk.Entry(frame_acoes, width=25)
-        self.entry_tarefa.grid(row=0, column=1, padx=5)
+        self.entry_nova = tk.Entry(
+            frame_add,
+            font=("Arial", 11),
+            bg="#3d3d3d",
+            fg="white",
+            insertbackground="white",
+            relief="flat",
+        )
+        self.entry_nova.pack(side="left", fill="x", expand=True, padx=(0, 10), ipady=5)
+        self.entry_nova.bind("<Return>", lambda e: self.adicionar_tarefa())
 
         btn_add = tk.Button(
-            frame_acoes, text="Adicionar", command=self.adicionar_tarefa
+            frame_add,
+            text="+ Criar",
+            command=self.adicionar_tarefa,
+            bg=self.accent_color,
+            fg="white",
+            font=("Arial", 10, "bold"),
+            relief="flat",
+            cursor="hand2",
         )
-        estilizar_botao(btn_add, "gray", largura=12, altura=1)
-        btn_add.grid(row=0, column=2, padx=5)
+        btn_add.pack(side="right", ipadx=10, ipady=2)
 
-        frame_botoes = tk.Frame(self.top)
-        frame_botoes.pack(pady=10)
+        ttk.Separator(self.top, orient="horizontal").pack(fill="x", padx=20, pady=10)
 
-        btn_ger = tk.Button(
-            frame_botoes, text="Gerenciar Missões", command=self.gerenciar_missoes
-        )
-        estilizar_botao(btn_ger, "#4a90e2", largura=20, altura=1)
-        btn_ger.grid(row=0, column=0, padx=10)
-
-        btn_del = tk.Button(
-            frame_botoes, text="Excluir Tarefa", command=self.excluir_tarefa
-        )
-        estilizar_botao(btn_del, "#f44336", largura=20, altura=1)
-        btn_del.grid(row=0, column=1, padx=10)
+        self.container = ScrollableFrame(self.top, bg_color=self.bg_color)
+        self.container.pack(fill="both", expand=True, padx=10, pady=(0, 20))
 
         self.atualizar_lista()
 
     def atualizar_lista(self):
-        self.listbox.delete(0, tk.END)
-        for t in self.tarefas:
-            missoes = t.get("missoes", [])
-            completo = missoes and all(m.get("concluido", False) for m in missoes)
+        for widget in self.container.scrollable_frame.winfo_children():
+            widget.destroy()
 
-            status_icon = "🏆" if completo else "📝"
-            if not missoes:
-                status_icon = "📂"
+        if not self.tarefas:
+            tk.Label(
+                self.container.scrollable_frame,
+                text="Nenhuma tarefa encontrada.",
+                bg=self.bg_color,
+                fg="#777",
+                font=("Arial", 12),
+            ).pack(pady=20)
+            return
 
-            total = len(missoes)
-            feitos = len([m for m in missoes if m.get("concluido", False)])
-            progresso = f"({feitos}/{total})" if total > 0 else ""
+        for i, tarefa in enumerate(self.tarefas):
+            self._criar_card_tarefa(i, tarefa)
 
-            self.listbox.insert(tk.END, f"{status_icon} {t['nome']} {progresso}")
+    def _criar_card_tarefa(self, index, tarefa):
+        missoes = tarefa.get("missoes", [])
+        total = len(missoes)
+        concluidas = len([m for m in missoes if m.get("concluido")])
+
+        card = tk.Frame(
+            self.container.scrollable_frame, bg=self.card_bg, padx=15, pady=10
+        )
+        card.pack(fill="x", pady=5, padx=5)
+
+        header = tk.Frame(card, bg=self.card_bg)
+        header.pack(fill="x")
+
+        status_icon = "🏆" if (total > 0 and total == concluidas) else "📝"
+        lbl_titulo = tk.Label(
+            header,
+            text=f"{status_icon} {tarefa['nome']}",
+            font=("Arial", 12, "bold"),
+            bg=self.card_bg,
+            fg=self.text_color,
+            anchor="w",
+        )
+        lbl_titulo.pack(side="left", fill="x", expand=True)
+
+        btn_edit = tk.Button(
+            header,
+            text="⚙️ Detalhes",
+            font=("Arial", 9),
+            bg="#3d3d3d",
+            fg="white",
+            relief="flat",
+            cursor="hand2",
+            command=lambda: self.abrir_detalhes(index),
+        )
+        btn_edit.pack(side="right", padx=5)
+
+        btn_del = tk.Button(
+            header,
+            text="🗑️",
+            font=("Arial", 9),
+            bg="#e74c3c",
+            fg="white",
+            relief="flat",
+            cursor="hand2",
+            command=lambda: self.excluir_tarefa(index),
+        )
+        btn_del.pack(side="right")
+
+        if total > 0:
+            frame_prog = tk.Frame(card, bg=self.card_bg)
+            frame_prog.pack(fill="x", pady=(10, 0))
+
+            porcentagem = (concluidas / total) * 100
+
+            style = ttk.Style()
+            style.theme_use("clam")
+            style.configure(
+                "green.Horizontal.TProgressbar",
+                background=self.success_color,
+                troughcolor="#1e1e1e",
+                bordercolor=self.card_bg,
+                lightcolor=self.success_color,
+                darkcolor=self.success_color,
+            )
+
+            pb = ttk.Progressbar(
+                frame_prog,
+                style="green.Horizontal.TProgressbar",
+                length=100,
+                mode="determinate",
+                value=porcentagem,
+            )
+            pb.pack(side="left", fill="x", expand=True, padx=(0, 10))
+
+            lbl_prog = tk.Label(
+                frame_prog,
+                text=f"{concluidas}/{total} ({int(porcentagem)}%)",
+                bg=self.card_bg,
+                fg="#aaaaaa",
+                font=("Arial", 9),
+            )
+            lbl_prog.pack(side="right")
+        else:
+            tk.Label(
+                card,
+                text="Sem sub-tarefas",
+                bg=self.card_bg,
+                fg="#555",
+                font=("Arial", 8, "italic"),
+                anchor="w",
+            ).pack(fill="x", pady=(5, 0))
 
     def adicionar_tarefa(self):
-        nome = self.entry_tarefa.get().strip()
+        nome = self.entry_nova.get().strip()
         if nome:
             self.tarefas.append({"nome": nome, "missoes": []})
             self.dados.salvar_tarefas(self.tarefas)
             self.atualizar_lista()
-            self.entry_tarefa.delete(0, tk.END)
+            self.entry_nova.delete(0, tk.END)
 
-    def excluir_tarefa(self):
-        sel = self.listbox.curselection()
-        if not sel:
-            return
-        if messagebox.askyesno(
-            "Confirmar", "Excluir esta tarefa e todas as suas missões?"
-        ):
-            self.tarefas.pop(sel[0])
+    def excluir_tarefa(self, index):
+        if messagebox.askyesno("Confirmar", "Excluir esta tarefa?"):
+            self.tarefas.pop(index)
             self.dados.salvar_tarefas(self.tarefas)
             self.atualizar_lista()
 
-    def gerenciar_missoes(self):
-        sel = self.listbox.curselection()
-        if not sel:
-            messagebox.showerror("Erro", "Selecione uma tarefa primeiro.")
-            return
-
-        index = sel[0]
-        tarefa_selecionada = self.tarefas[index]
-
-        def salvar_callback():
+    def abrir_detalhes(self, index):
+        def ao_fechar():
             self.dados.salvar_tarefas(self.tarefas)
             self.atualizar_lista()
 
-        JanelaMissoes(self.top, tarefa_selecionada, salvar_callback)
+        JanelaMissoes(self.top, self.tarefas[index], ao_fechar)
 
 
 class JanelaMissoes:
-    def __init__(self, parent, tarefa, callback_salvar):
+    def __init__(self, parent, tarefa, callback_fechar):
         self.top = tk.Toplevel(parent)
-        self.top.title(f"Missões: {tarefa['nome']}")
-        self.top.geometry("450x550")
-        self.top.resizable(True, True)
-        centralizar_janela(self.top, 450, 550)
+        self.top.title(f"Detalhes: {tarefa['nome']}")
+        self.top.geometry("450x600")
+        centralizar_janela(self.top, 450, 600)
+
+        self.bg_color = "#1e1e1e"
+        self.card_bg = "#2d2d2d"
+        self.text_color = "#ffffff"
+        self.top.configure(bg=self.bg_color)
 
         self.tarefa = tarefa
-        self.callback_salvar = callback_salvar
+        self.callback_fechar = callback_fechar
 
         if "missoes" not in self.tarefa:
             self.tarefa["missoes"] = []
 
         self._criar_interface()
 
+        self.top.protocol("WM_DELETE_WINDOW", self._fechar)
+
+    def _fechar(self):
+        self.callback_fechar()
+        self.top.destroy()
+
     def _criar_interface(self):
+        header = tk.Frame(self.top, bg=self.bg_color)
+        header.pack(fill="x", padx=20, pady=20)
+
         tk.Label(
-            self.top,
-            text=f"Missões de {self.tarefa['nome']}",
-            font=("Arial", 14, "bold"),
-        ).pack(pady=10)
+            header,
+            text=self.tarefa["nome"],
+            font=("Arial", 16, "bold"),
+            bg=self.bg_color,
+            fg=self.text_color,
+            wraplength=400,
+        ).pack(anchor="w")
+        tk.Label(
+            header,
+            text="Lista de verificação",
+            font=("Arial", 10),
+            bg=self.bg_color,
+            fg="#aaaaaa",
+        ).pack(anchor="w")
 
-        frame_input = tk.Frame(self.top)
-        frame_input.pack(pady=5)
+        frame_input = tk.Frame(self.top, bg=self.bg_color)
+        frame_input.pack(fill="x", padx=20, pady=(0, 10))
 
-        self.entry_missao = tk.Entry(frame_input, width=30)
-        self.entry_missao.grid(row=0, column=0, padx=5)
-
-        btn_add = tk.Button(frame_input, text="Adicionar", command=self.adicionar)
-        estilizar_botao(btn_add, "gray", largura=10, altura=1)
-        btn_add.grid(row=0, column=1, padx=5)
-
-        frame_lista = tk.Frame(self.top)
-        frame_lista.pack(pady=10, fill="both", expand=True)
-
-        self.listbox = tk.Listbox(frame_lista, width=50, height=15, font=("Arial", 11))
-        self.listbox.pack(side="left", fill="both", expand=True, padx=10)
-
-        sb = ttk.Scrollbar(frame_lista, orient="vertical", command=self.listbox.yview)
-        self.listbox.configure(yscrollcommand=sb.set)
-        sb.pack(side="right", fill="y")
-
-        self.listbox.bind("<Double-Button-1>", self.toggle_missao)
-
-        frame_btns = tk.Frame(self.top)
-        frame_btns.pack(pady=10)
-
-        btn_toggle = tk.Button(
-            frame_btns, text="Concluir / Reabrir", command=self.toggle_missao
+        self.entry_missao = tk.Entry(
+            frame_input,
+            font=("Arial", 11),
+            bg="#3d3d3d",
+            fg="white",
+            insertbackground="white",
+            relief="flat",
         )
-        estilizar_botao(btn_toggle, "#27AE60", largura=18, altura=1)
-        btn_toggle.grid(row=0, column=0, padx=5)
+        self.entry_missao.pack(
+            side="left", fill="x", expand=True, padx=(0, 10), ipady=5
+        )
+        self.entry_missao.bind("<Return>", lambda e: self.adicionar())
 
-        btn_del = tk.Button(frame_btns, text="Remover Missão", command=self.remover)
-        estilizar_botao(btn_del, "#e74c3c", largura=18, altura=1)
-        btn_del.grid(row=0, column=1, padx=5)
+        btn_add = tk.Button(
+            frame_input,
+            text="+",
+            command=self.adicionar,
+            bg="#4a90e2",
+            fg="white",
+            font=("Arial", 12, "bold"),
+            relief="flat",
+        )
+        btn_add.pack(side="right", ipadx=10)
+
+        self.container = ScrollableFrame(self.top, bg_color=self.bg_color)
+        self.container.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.atualizar_lista()
 
     def atualizar_lista(self):
-        self.listbox.delete(0, tk.END)
-        for m in self.tarefa["missoes"]:
-            status = "☑" if m.get("concluido") else "☐"
-            texto = m.get("descricao", "")
-            self.listbox.insert(tk.END, f"{status} {texto}")
+        for widget in self.container.scrollable_frame.winfo_children():
+            widget.destroy()
+
+        missoes = self.tarefa["missoes"]
+
+        if not missoes:
+            tk.Label(
+                self.container.scrollable_frame,
+                text="Nenhuma etapa adicionada.",
+                bg=self.bg_color,
+                fg="#555",
+            ).pack(pady=20)
+            return
+
+        for i, missao in enumerate(missoes):
+            self._criar_item_missao(i, missao)
+
+    def _criar_item_missao(self, index, missao):
+        frame = tk.Frame(
+            self.container.scrollable_frame, bg=self.card_bg, pady=5, padx=5
+        )
+        frame.pack(fill="x", pady=2, padx=5)
+
+        status = "☑" if missao.get("concluido") else "☐"
+        color = "#2ecc71" if missao.get("concluido") else "#7f8c8d"
+
+        btn_check = tk.Label(
+            frame,
+            text=status,
+            font=("Arial", 14),
+            bg=self.card_bg,
+            fg=color,
+            cursor="hand2",
+        )
+        btn_check.pack(side="left", padx=5)
+        btn_check.bind("<Button-1>", lambda e: self.toggle_missao(index))
+
+        texto_style = (
+            ("Arial", 11, "overstrike") if missao.get("concluido") else ("Arial", 11)
+        )
+        texto_color = "#777" if missao.get("concluido") else self.text_color
+
+        lbl_text = tk.Label(
+            frame,
+            text=missao["descricao"],
+            font=texto_style,
+            bg=self.card_bg,
+            fg=texto_color,
+            anchor="w",
+        )
+        lbl_text.pack(side="left", fill="x", expand=True, padx=5)
+        lbl_text.bind("<Button-1>", lambda e: self.toggle_missao(index))
+
+        btn_del = tk.Label(
+            frame,
+            text="✕",
+            font=("Arial", 10, "bold"),
+            bg=self.card_bg,
+            fg="#e74c3c",
+            cursor="hand2",
+        )
+        btn_del.pack(side="right", padx=10)
+        btn_del.bind("<Button-1>", lambda e: self.remover(index))
 
     def adicionar(self):
         texto = self.entry_missao.get().strip()
         if texto:
             self.tarefa["missoes"].append({"descricao": texto, "concluido": False})
-            self.callback_salvar()
             self.atualizar_lista()
             self.entry_missao.delete(0, tk.END)
 
-    def toggle_missao(self, event=None):
-        sel = self.listbox.curselection()
-        if not sel:
-            return
-
-        idx = sel[0]
-        estado_atual = self.tarefa["missoes"][idx].get("concluido", False)
-        self.tarefa["missoes"][idx]["concluido"] = not estado_atual
-
-        self.callback_salvar()
+    def toggle_missao(self, index):
+        estado_atual = self.tarefa["missoes"][index].get("concluido", False)
+        self.tarefa["missoes"][index]["concluido"] = not estado_atual
         self.atualizar_lista()
 
-        self.listbox.selection_set(idx)
-
-    def remover(self):
-        sel = self.listbox.curselection()
-        if not sel:
-            return
-
-        idx = sel[0]
-        self.tarefa["missoes"].pop(idx)
-        self.callback_salvar()
+    def remover(self, index):
+        self.tarefa["missoes"].pop(index)
         self.atualizar_lista()
 
 
@@ -243,18 +444,14 @@ class JanelaResumo:
     def _calcular_dados(self):
         self.total_zerados = len(self.zerados)
         self.total_jogos = len(self.jogos)
-
         minutos_totais = sum(
             calcular_total_minutos(j.get("Tempo Jogado", "0:00")) for j in self.zerados
         )
         self.horas_totais = minutos_totais // 60
-
         notas = [float(j["Nota"]) for j in self.zerados if j.get("Nota")]
         self.media_notas = sum(notas) / len(notas) if notas else 0.0
-
         generos = [j["Gênero"] for j in self.zerados]
         self.top_genero = max(set(generos), key=generos.count) if generos else "N/A"
-
         self.top_5_jogos = sorted(
             self.zerados,
             key=lambda x: float(x["Nota"]) if x.get("Nota") else 0,
@@ -295,10 +492,8 @@ class JanelaResumo:
             bg=self.card_bg,
             fg=self.text_color,
         ).pack(pady=5)
-
         self._criar_grafico_pizza(left_frame)
 
-        # Lado Direito: Top 5 Melhores Jogos
         right_frame = tk.Frame(content_frame, bg=self.card_bg, padx=10, pady=10)
         right_frame.pack(side="right", fill="both", expand=True, padx=(10, 0))
 
@@ -309,7 +504,6 @@ class JanelaResumo:
             bg=self.card_bg,
             fg=self.text_color,
         ).pack(pady=5)
-
         self._criar_tabela_top5(right_frame)
 
     def _criar_card(self, parent, titulo, valor, icone, col_index):
@@ -352,7 +546,6 @@ class JanelaResumo:
             startangle=90,
             colors=colors[: len(labels)],
         )
-
         plt.setp(texts, color="white")
         plt.setp(autotexts, size=8, weight="bold", color="white")
 
@@ -377,11 +570,9 @@ class JanelaResumo:
 
         cols = ("Jogo", "Nota", "Plat.")
         tree = ttk.Treeview(parent, columns=cols, show="headings", height=8)
-
         tree.heading("Jogo", text="Nome do Jogo")
         tree.heading("Nota", text="Nota")
         tree.heading("Plat.", text="Plataforma")
-
         tree.column("Jogo", width=150)
         tree.column("Nota", width=50, anchor="center")
         tree.column("Plat.", width=80, anchor="center")
@@ -390,7 +581,6 @@ class JanelaResumo:
             tree.insert(
                 "", "end", values=(jogo["Título"], jogo["Nota"], jogo["Plataforma"])
             )
-
         tree.pack(fill="both", expand=True, pady=10)
 
 
@@ -431,10 +621,8 @@ class JanelaWallpaper:
 
     def _salvar(self):
         target = self.img_orig.resize((600, 400), Image.LANCZOS)
-
         os.makedirs(os.path.dirname(WALLPAPER_PATH), exist_ok=True)
         target.save(WALLPAPER_PATH, "PNG")
-
         messagebox.showinfo("Sucesso", "Wallpaper atualizado!")
         self.callback()
         self.top.destroy()

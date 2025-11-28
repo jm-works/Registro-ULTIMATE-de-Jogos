@@ -1,6 +1,19 @@
 [
     {
         "nome": "Max Payne",
-        "missoes": []
+        "missoes": [
+            {
+                "descricao": "Max Payne I",
+                "concluido": false
+            },
+            {
+                "descricao": "Max Payne II",
+                "concluido": false
+            },
+            {
+                "descricao": "Max Payne III",
+                "concluido": false
+            }
+        ]
     }
 ]

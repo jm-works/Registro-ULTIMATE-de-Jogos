@@ -1,5 +1,7 @@
 # 🕹️ Registro ULTIMATE de Jogos - Seu Diário de Games
----
+> **Criado por jm-works (JMRS)**
+
+![Badge Python](https://img.shields.io/badge/Python-3.13+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 
 ## 📜 Sobre o Projeto
 Este programa tem como propósito catalogar jogos finalizados, inspirado na planilha de jogos do canal [Cogumelando Videogame](https://www.youtube.com/watch?v=uGLnQw6umhI). Ele oferece estatísticas básicas e detalha de forma clara todas as suas jogatinas, permitindo um acompanhamento organizado do seu progresso nos games.
@@ -62,7 +64,6 @@ O programa possui uma interface intuitiva, inspirada em menus clássicos de comp
   - Editar Jogo
   - Excluir Jogo
 
----
 
 ## 🏆 Como Usar
 
@@ -100,17 +101,9 @@ O programa possui uma interface intuitiva, inspirada em menus clássicos de comp
 ### Resumo da sua Jornada
 - No menu **"Resumo da sua Jornada"**, veja um relatório detalhado e resumido, com todos os seus jogos registrados.
 
----
-
 ## 🚀 Contribuindo
 Gostaria de ajudar no desenvolvimento do projeto? Se sim, siga estes passos:
 1. Faça um Fork do repositório.
 2. Crie uma branch: `git checkout -b minha-ideia`.
 3. Faça um commit: `git commit -m 'Minha nova ideia'`.
 4. Envie um Pull Request.
-
----
-
-Projeto #01
-
-JM | José Matheus

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from src.utils import centralizar_janela, calcular_total_minutos
-from src.constantes import WALLPAPER_PATH
+from src.constantes import WALLPAPER_PATH, GENEROS
 from src.gui.componentes import estilizar_botao
 
 
@@ -66,6 +66,108 @@ class ScrollableFrame(tk.Frame):
             self.canvas.yview_scroll(delta, "units")
         except tk.TclError:
             pass
+
+
+class JanelaSeletorGenero:
+    def __init__(self, parent, callback):
+        self.top = tk.Toplevel(parent)
+        self.top.title("Selecionar Gênero")
+        self.top.geometry("320x450")
+        centralizar_janela(self.top, 320, 450)
+        self.top.configure(bg="#1e1e1e")
+        self.top.resizable(False, False)
+
+        self.callback = callback
+        self.lista_completa = GENEROS
+
+        self._criar_ui()
+        self.top.transient(parent)
+        self.top.grab_set()
+        self.top.focus_set()
+
+    def _criar_ui(self):
+        tk.Label(
+            self.top,
+            text="Pesquisar Gênero:",
+            bg="#1e1e1e",
+            fg="white",
+            font=("Arial", 10, "bold"),
+        ).pack(pady=(15, 5))
+
+        self.var_busca = tk.StringVar()
+        self.var_busca.trace("w", self._filtrar)
+
+        entry = tk.Entry(
+            self.top,
+            textvariable=self.var_busca,
+            font=("Arial", 11),
+            bg="#333",
+            fg="white",
+            insertbackground="white",
+        )
+        entry.pack(fill="x", padx=20, pady=5)
+        entry.focus_set()
+
+        frame_list = tk.Frame(self.top, bg="#1e1e1e")
+        frame_list.pack(fill="both", expand=True, padx=20, pady=10)
+
+        sb = tk.Scrollbar(frame_list)
+        sb.pack(side="right", fill="y")
+
+        self.listbox = tk.Listbox(
+            frame_list,
+            yscrollcommand=sb.set,
+            height=15,
+            bg="#2d2d2d",
+            fg="white",
+            selectbackground="#4a90e2",
+            font=("Arial", 10),
+            bd=0,
+            highlightthickness=0,
+        )
+        self.listbox.pack(side="left", fill="both", expand=True)
+        sb.config(command=self.listbox.yview)
+
+        self.listbox.bind("<Double-Button-1>", self._selecionar)
+        self.listbox.bind("<Return>", self._selecionar)
+
+        btn = tk.Button(
+            self.top,
+            text="Confirmar Seleção",
+            command=self._selecionar,
+            bg="#27AE60",
+            fg="white",
+            font=("Arial", 10, "bold"),
+            relief="flat",
+        )
+        btn.pack(fill="x", padx=20, pady=(0, 20))
+
+        self._atualizar_lista(self.lista_completa)
+
+    def _filtrar(self, *args):
+        termo = self.var_busca.get().lower()
+        if not termo:
+            filtrados = self.lista_completa
+        else:
+            filtrados = [g for g in self.lista_completa if termo in g.lower()]
+        self._atualizar_lista(filtrados)
+
+    def _atualizar_lista(self, itens):
+        self.listbox.delete(0, tk.END)
+        for item in itens:
+            self.listbox.insert(tk.END, item)
+
+    def _selecionar(self, event=None):
+        sel = self.listbox.curselection()
+        if sel:
+            escolhido = self.listbox.get(sel[0])
+            self.callback(escolhido)
+            self.top.destroy()
+        else:
+            if self.listbox.size() == 1:
+                escolhido = self.listbox.get(0)
+                self.callback(escolhido)
+                self.top.destroy()
 
 
 class JanelaChecklist:

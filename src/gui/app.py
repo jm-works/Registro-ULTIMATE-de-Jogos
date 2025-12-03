@@ -22,7 +22,12 @@ from src.dados import GerenciadorDados
 from src.estatisticas import GeradorGraficos
 from src.exportacao import Exportador
 from src.gui.componentes import estilizar_botao, CalendarioPicker
-from src.gui.janelas import JanelaChecklist, JanelaResumo, JanelaWallpaper
+from src.gui.janelas import (
+    JanelaChecklist,
+    JanelaResumo,
+    JanelaWallpaper,
+    JanelaSeletorGenero,
+)
 
 
 class App:
@@ -56,6 +61,7 @@ class App:
         self.var_data = tk.StringVar()
         self.var_forma = tk.StringVar()
         self.var_desc = tk.StringVar()
+
         self.var_horas = tk.StringVar(value="0")
         self.var_minutos = tk.StringVar(value="00")
 
@@ -173,14 +179,30 @@ class App:
         tk.Label(self.root, text="Gênero*:").grid(
             row=1, column=0, sticky="w", padx=10, pady=3
         )
-        self.cb_gen = ttk.Combobox(
-            self.root,
+
+        frame_genero = tk.Frame(self.root)
+        frame_genero.grid(row=1, column=1, sticky="w", padx=10)
+
+        self.entry_gen = tk.Entry(
+            frame_genero,
             textvariable=self.var_genero,
-            values=GENEROS,
-            width=18,
+            width=17,
+            state="readonly",
+            disabledbackground="white",
+            disabledforeground="black",
         )
-        self.cb_gen.grid(row=1, column=1, sticky="w", padx=10)
-        self.cb_gen.bind("<KeyRelease>", self._filtrar_generos)
+        self.entry_gen.pack(side="left")
+
+        btn_lupa = tk.Button(
+            frame_genero,
+            text="🔍",
+            command=self._abrir_seletor_genero,
+            cursor="hand2",
+            relief="raised",
+            bg="#e0e0e0",
+            height=1,
+        )
+        btn_lupa.pack(side="left", padx=(3, 0))
 
         tk.Label(self.root, text="Plataforma*:").grid(
             row=2, column=0, sticky="w", padx=10, pady=3
@@ -301,6 +323,15 @@ class App:
         entry.grid(row=row, column=1, sticky="w", padx=10)
         return entry
 
+    def _abrir_seletor_genero(self):
+        def callback(selecionado):
+            # Destrava temporariamente para inserir o texto
+            self.entry_gen.config(state="normal")
+            self.var_genero.set(selecionado)
+            self.entry_gen.config(state="readonly")
+
+        JanelaSeletorGenero(self.root, callback)
+
     def _validar_input_horas(self, valor):
         if valor == "":
             return True
@@ -316,13 +347,6 @@ class App:
         if not valor.isdigit():
             return False
         return int(valor) <= 59
-
-    def _filtrar_generos(self, event):
-        texto = self.var_genero.get().lower()
-        if not texto:
-            self.cb_gen["values"] = GENEROS
-        else:
-            self.cb_gen["values"] = [g for g in GENEROS if texto in g.lower()]
 
     def adicionar_jogo(self):
         tempo_str = ""
@@ -477,7 +501,9 @@ class App:
                 "Editar", "Editar este jogo? (Volta para o formulário)"
             ):
                 self.var_titulo.set(jogo["Título"])
+                self.entry_gen.config(state="normal")
                 self.var_genero.set(jogo["Gênero"])
+                self.entry_gen.config(state="readonly")
                 self.var_plataforma.set(jogo["Plataforma"])
                 self.var_data.set(jogo.get("Data de Zeramento", ""))
                 self.var_forma.set(jogo["Forma de Zeramento"])
@@ -578,7 +604,6 @@ class App:
             self.var_minutos.set("00")
             self.spin_horas.config(state="disabled")
             self.spin_minutos.config(state="disabled")
-
             self.var_data.set("")
             self.slider_nota.config(state="disabled")
         else:
@@ -602,7 +627,10 @@ class App:
 
     def _limpar_campos(self):
         self.var_titulo.set("")
+        self.entry_gen.config(state="normal")
         self.var_genero.set("")
+        self.entry_gen.config(state="readonly")
+
         self.var_plataforma.set("")
         self.var_desc.set("")
 

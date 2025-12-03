@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from src.constantes import GENEROS
 
 
 def centralizar_janela(janela, largura, altura):
@@ -14,10 +15,13 @@ def centralizar_janela(janela, largura, altura):
 def validar_campos(
     titulo, genero, plataforma, data_zeramento, tempo_jogado, nota, estado
 ):
+    """Verifica se os dados inseridos no formulário são válidos."""
     if not titulo.strip():
         return "O campo 'Título' é obrigatório! Não deixe seu jogo sem nome."
     if not genero.strip():
         return "O campo 'Gênero' é obrigatório! Escolha o tipo do seu jogo."
+    if genero not in GENEROS:
+        return "Gênero inválido! Por favor, utilize a lupa para selecionar um gênero da lista oficial."
     if not plataforma.strip():
         return "O campo 'Plataforma' é obrigatório! Onde você jogou?"
     if not estado.strip():

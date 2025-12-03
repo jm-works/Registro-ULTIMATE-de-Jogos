@@ -14,7 +14,6 @@ def centralizar_janela(janela, largura, altura):
 def validar_campos(
     titulo, genero, plataforma, data_zeramento, tempo_jogado, nota, estado
 ):
-    """Verifica se os dados inseridos no formulário são válidos."""
     if not titulo.strip():
         return "O campo 'Título' é obrigatório! Não deixe seu jogo sem nome."
     if not genero.strip():
@@ -23,6 +22,7 @@ def validar_campos(
         return "O campo 'Plataforma' é obrigatório! Onde você jogou?"
     if not estado.strip():
         return "O campo 'Forma de Zeramento' é obrigatório!"
+
     if estado not in ["Planejo Jogar", "Desistência"]:
         if not re.match(r"^\d{2}/\d{2}/\d{4}$", data_zeramento):
             return "A data de zeramento deve estar no formato DIA/MÊS/ANO."
@@ -30,15 +30,9 @@ def validar_campos(
             datetime.strptime(data_zeramento, "%d/%m/%Y")
         except ValueError:
             return "A data de zeramento não é válida!"
-
-        if not re.match(r"^\d+:\d{2}$", tempo_jogado):
-            return "O tempo jogado deve estar no formato HORAS:MINUTOS!"
-        try:
-            horas, minutos = map(int, tempo_jogado.split(":"))
-            if horas < 0 or minutos < 0 or minutos >= 60:
-                return "Minutos inválidos (0-59)."
-        except ValueError:
-            return "O tempo jogado é inválido!"
+        tempo_limpo = tempo_jogado.replace(" ", "").lower()
+        if not re.match(r"^(\d+h\d{2}m)$", tempo_limpo):
+            return "O tempo jogado está com formato inválido."
 
     if nota:
         try:
@@ -52,10 +46,30 @@ def validar_campos(
 
 
 def calcular_total_minutos(tempo_jogado):
-    if not tempo_jogado or ":" not in tempo_jogado:
+    if not tempo_jogado:
         return 0
+    t = tempo_jogado.lower().replace(" ", "")
+
+    horas = 0
+    minutos = 0
+
     try:
-        horas, minutos = map(int, tempo_jogado.split(":"))
+        if "h" in t and "m" in t:
+            parts = t.split("h")
+            horas = int(parts[0])
+            minutos = int(parts[1].replace("m", ""))
+        elif "h" in t:
+            parts = t.split("h")
+            horas = int(parts[0])
+            if len(parts) > 1 and parts[1]:
+                minutos = int(parts[1].replace("m", ""))
+        elif ":" in t:
+            parts = t.split(":")
+            horas = int(parts[0])
+            minutos = int(parts[1])
+        elif t.isdigit():
+            return int(t) * 60
+
         return horas * 60 + minutos
     except ValueError:
         return 0

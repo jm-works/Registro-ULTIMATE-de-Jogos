@@ -6,6 +6,7 @@ import re
 import pyperclip
 from PIL import Image, ImageTk
 import os
+import sys
 from datetime import datetime
 
 from src.constantes import (
@@ -20,7 +21,7 @@ from src.utils import centralizar_janela, validar_campos, calcular_total_minutos
 from src.dados import GerenciadorDados
 from src.estatisticas import GeradorGraficos
 from src.exportacao import Exportador
-from src.gui.componentes import estilizar_botao
+from src.gui.componentes import estilizar_botao, CalendarioPicker
 from src.gui.janelas import JanelaChecklist, JanelaResumo, JanelaWallpaper
 
 
@@ -55,7 +56,9 @@ class App:
         self.var_data = tk.StringVar()
         self.var_forma = tk.StringVar()
         self.var_desc = tk.StringVar()
-        self.var_tempo = tk.StringVar()
+        self.var_horas = tk.StringVar(value="0")
+        self.var_minutos = tk.StringVar(value="00")
+
         self.var_nota = tk.DoubleVar(value=1.0)
         self.var_busca = tk.StringVar()
 
@@ -116,7 +119,7 @@ class App:
         filter_menu = Menu(menu_bar, tearoff=0)
         menu_bar.add_cascade(label="Filtro", menu=filter_menu)
         filter_menu.add_command(
-            label="Filtrar Jogos", command=self._abrir_janela_filtro
+            label="Busca Avançada", command=self._abrir_janela_filtro
         )
         filter_menu.add_command(label="Limpar Filtros", command=self._limpar_filtros)
 
@@ -170,14 +173,14 @@ class App:
         tk.Label(self.root, text="Gênero*:").grid(
             row=1, column=0, sticky="w", padx=10, pady=3
         )
-        cb_gen = ttk.Combobox(
+        self.cb_gen = ttk.Combobox(
             self.root,
             textvariable=self.var_genero,
             values=GENEROS,
-            state="readonly",
             width=18,
         )
-        cb_gen.grid(row=1, column=1, sticky="w", padx=10)
+        self.cb_gen.grid(row=1, column=1, sticky="w", padx=10)
+        self.cb_gen.bind("<KeyRelease>", self._filtrar_generos)
 
         tk.Label(self.root, text="Plataforma*:").grid(
             row=2, column=0, sticky="w", padx=10, pady=3
@@ -187,7 +190,26 @@ class App:
         )
         cb_plat.grid(row=2, column=1, sticky="w", padx=10)
 
-        self._criar_campo(3, "Data Zeramento:", self.var_data)
+        tk.Label(self.root, text="Data Zeramento:").grid(
+            row=3, column=0, sticky="w", padx=10, pady=3
+        )
+        frame_data = tk.Frame(self.root)
+        frame_data.grid(row=3, column=1, sticky="w", padx=10)
+
+        entry_data = tk.Entry(frame_data, textvariable=self.var_data, width=15)
+        entry_data.pack(side="left")
+
+        btn_cal = tk.Button(
+            frame_data,
+            text="📅",
+            command=lambda: CalendarioPicker(self.root, lambda d: self.var_data.set(d)),
+            cursor="hand2",
+            relief="flat",
+            bg="#ddd",
+            font=("Arial", 8),
+        )
+        btn_cal.pack(side="left", padx=2)
+
         self.var_data.trace_add("write", self._formatar_data)
 
         tk.Label(self.root, text="Estado*:").grid(
@@ -205,8 +227,44 @@ class App:
 
         self._criar_campo(5, "Descrição:", self.var_desc)
 
-        self._criar_campo(6, "Tempo (HH:MM):", self.var_tempo)
-        self.var_tempo.trace_add("write", self._formatar_tempo)
+        tk.Label(self.root, text="Tempo Jogado:").grid(
+            row=6, column=0, sticky="w", padx=10, pady=3
+        )
+
+        frame_tempo = tk.Frame(self.root)
+        frame_tempo.grid(row=6, column=1, sticky="w", padx=10)
+
+        vcmd_horas = (self.root.register(self._validar_input_horas), "%P")
+        vcmd_minutos = (self.root.register(self._validar_input_minutos), "%P")
+
+        self.spin_horas = tk.Spinbox(
+            frame_tempo,
+            from_=0,
+            to=9999,
+            textvariable=self.var_horas,
+            width=5,
+            font=("Arial", 10),
+            wrap=False,
+            validate="key",
+            validatecommand=vcmd_horas,
+        )
+        self.spin_horas.pack(side="left")
+        tk.Label(frame_tempo, text="h").pack(side="left", padx=(2, 8))
+
+        self.spin_minutos = tk.Spinbox(
+            frame_tempo,
+            from_=0,
+            to=59,
+            textvariable=self.var_minutos,
+            width=3,
+            format="%02.0f",
+            font=("Arial", 10),
+            wrap=True,
+            validate="key",
+            validatecommand=vcmd_minutos,
+        )
+        self.spin_minutos.pack(side="left")
+        tk.Label(frame_tempo, text="m").pack(side="left")
 
         tk.Label(self.root, text="Nota (1-10):").grid(
             row=7, column=0, sticky="w", padx=10, pady=3
@@ -220,15 +278,12 @@ class App:
             self.root, text="Adicionar Jogo", command=self.adicionar_jogo
         )
         estilizar_botao(btn_add, "gray", largura=15, altura=1)
-        # btn_add.grid(row=8, column=0, columnspan=2, pady=10)
         btn_add.place(x=90, y=280)
 
         frame_lista = tk.Frame(self.root)
-
         frame_lista.grid(row=0, column=4, rowspan=9, padx=12, pady=5, sticky="n")
 
         self.listbox = tk.Listbox(frame_lista, width=40, height=15)
-
         self.listbox.pack(side="left")
 
         sb = tk.Scrollbar(frame_lista, command=self.listbox.yview)
@@ -242,17 +297,50 @@ class App:
         tk.Label(self.root, text=texto).grid(
             row=row, column=0, sticky="w", padx=10, pady=3
         )
-        tk.Entry(self.root, textvariable=variavel, width=21).grid(
-            row=row, column=1, sticky="w", padx=10
-        )
+        entry = tk.Entry(self.root, textvariable=variavel, width=21)
+        entry.grid(row=row, column=1, sticky="w", padx=10)
+        return entry
+
+    def _validar_input_horas(self, valor):
+        if valor == "":
+            return True
+        if not valor.isdigit():
+            return False
+        if len(valor) > 4:
+            return False
+        return int(valor) <= 9999
+
+    def _validar_input_minutos(self, valor):
+        if valor == "":
+            return True
+        if not valor.isdigit():
+            return False
+        return int(valor) <= 59
+
+    def _filtrar_generos(self, event):
+        texto = self.var_genero.get().lower()
+        if not texto:
+            self.cb_gen["values"] = GENEROS
+        else:
+            self.cb_gen["values"] = [g for g in GENEROS if texto in g.lower()]
 
     def adicionar_jogo(self):
+        tempo_str = ""
+        if self.var_forma.get() not in ["Planejo Jogar", "Desistência"]:
+            h = self.var_horas.get()
+            m = self.var_minutos.get()
+            if not h:
+                h = "0"
+            if not m:
+                m = "00"
+            tempo_str = f"{h}h {m.zfill(2)}m"
+
         erro = validar_campos(
             self.var_titulo.get(),
             self.var_genero.get(),
             self.var_plataforma.get(),
             self.var_data.get(),
-            self.var_tempo.get(),
+            tempo_str,
             self.var_nota.get(),
             self.var_forma.get(),
         )
@@ -271,11 +359,7 @@ class App:
             ),
             "Forma de Zeramento": self.var_forma.get(),
             "Descrição de Zeramento": self.var_desc.get(),
-            "Tempo Jogado": (
-                self.var_tempo.get()
-                if self.var_forma.get() not in ["Planejo Jogar", "Desistência"]
-                else ""
-            ),
+            "Tempo Jogado": tempo_str,
             "Nota": (
                 self.var_nota.get()
                 if self.var_forma.get() not in ["Planejo Jogar", "Desistência"]
@@ -297,6 +381,8 @@ class App:
                 icone = "📅"
             elif estado == "Desistência":
                 icone = "❌"
+            elif estado == "Platina":
+                icone = "🏆"
             self.listbox.insert(tk.END, f"{idx}. {icone} {jogo['Título']}")
 
     def mostrar_info_jogo(self, event):
@@ -304,7 +390,15 @@ class App:
         if not sel:
             return
         jogo = self.jogos_visualizados[sel[0]]
-        msg = f"Título: {jogo['Título']}\nGênero: {jogo['Gênero']}\nPlataforma: {jogo['Plataforma']}\nEstado: {jogo['Forma de Zeramento']}\nTempo: {jogo.get('Tempo Jogado', 'N/A')}\nNota: {jogo.get('Nota', 'N/A')}"
+        msg = (
+            f"Título: {jogo['Título']}\n"
+            f"Gênero: {jogo['Gênero']}\n"
+            f"Plataforma: {jogo['Plataforma']}\n"
+            f"Estado: {jogo['Forma de Zeramento']}\n"
+            f"Data: {jogo.get('Data de Zeramento', '-')}\n"
+            f"Tempo: {jogo.get('Tempo Jogado', 'N/A')}\n"
+            f"Nota: {jogo.get('Nota', 'N/A')}"
+        )
         messagebox.showinfo("Detalhes", msg)
 
     def _abrir_menu_contexto(self, event):
@@ -321,21 +415,15 @@ class App:
                 label="Nota (Maior-Menor)", command=lambda: self._ordenar("nota")
             )
             menu_org.add_command(
-                label="Data (Recente-Antiga)", command=lambda: self._ordenar("data")
+                label="Data (Recente)", command=lambda: self._ordenar("data")
             )
-            menu_org.add_command(
-                label="Plataforma (A-Z)", command=lambda: self._ordenar("plataforma")
-            )
-            m.add_cascade(label="Organizar Lista", menu=menu_org)
+            m.add_cascade(label="Organizar", menu=menu_org)
             m.add_separator()
             m.add_command(label="Copiar Nome", command=self._copiar_nome)
-            m.add_command(label="Pesquisar no Google", command=self._pesquisar_google)
+            m.add_command(label="Google", command=self._pesquisar_google)
             m.add_separator()
             m.add_command(label="Editar", command=self._editar_jogo_selecionado)
             m.add_command(label="Excluir", command=self._excluir_jogo_selecionado)
-            m.add_separator()
-            m.add_command(label="Filtrar...", command=self._abrir_janela_filtro)
-            m.add_command(label="Limpar Filtros", command=self._limpar_filtros)
             m.post(event.x_root, event.y_root)
         except Exception:
             pass
@@ -356,23 +444,19 @@ class App:
                 ),
                 reverse=True,
             )
-        elif criterio == "plataforma":
-            self.lista_jogos.sort(key=lambda x: x["Plataforma"].lower())
         self._limpar_filtros()
 
     def _copiar_nome(self):
         sel = self.listbox.curselection()
-        if not sel:
-            return
-        pyperclip.copy(self.jogos_visualizados[sel[0]]["Título"])
+        if sel:
+            pyperclip.copy(self.jogos_visualizados[sel[0]]["Título"])
 
     def _pesquisar_google(self):
         sel = self.listbox.curselection()
-        if not sel:
-            return
-        webbrowser.open(
-            f"https://www.google.com/search?q={urllib.parse.quote(self.jogos_visualizados[sel[0]]['Título'])}"
-        )
+        if sel:
+            webbrowser.open(
+                f"https://www.google.com/search?q={urllib.parse.quote(self.jogos_visualizados[sel[0]]['Título'])}"
+            )
 
     def _excluir_jogo_selecionado(self):
         sel = self.listbox.curselection()
@@ -382,7 +466,6 @@ class App:
         if messagebox.askyesno("Excluir", f"Apagar '{jogo['Título']}'?"):
             self.lista_jogos.remove(jogo)
             self._limpar_filtros()
-            messagebox.showinfo("Sucesso", "Jogo removido.")
 
     def _editar_jogo_selecionado(self):
         sel = self.listbox.curselection()
@@ -391,8 +474,7 @@ class App:
         jogo = self.jogos_visualizados[sel[0]]
         if jogo in self.lista_jogos:
             if messagebox.askyesno(
-                "Editar Jogo",
-                "Deseja editar este jogo?\n\nO jogo será removido da lista e os dados voltarão para o formulário.",
+                "Editar", "Editar este jogo? (Volta para o formulário)"
             ):
                 self.var_titulo.set(jogo["Título"])
                 self.var_genero.set(jogo["Gênero"])
@@ -400,7 +482,22 @@ class App:
                 self.var_data.set(jogo.get("Data de Zeramento", ""))
                 self.var_forma.set(jogo["Forma de Zeramento"])
                 self.var_desc.set(jogo.get("Descrição de Zeramento", ""))
-                self.var_tempo.set(jogo.get("Tempo Jogado", ""))
+
+                tempo = jogo.get("Tempo Jogado", "")
+                h_val = "0"
+                m_val = "00"
+                if "h" in tempo:
+                    try:
+                        partes = tempo.split("h")
+                        h_val = partes[0].strip()
+                        if len(partes) > 1 and "m" in partes[1]:
+                            m_val = partes[1].replace("m", "").strip()
+                    except:
+                        pass
+
+                self.var_horas.set(h_val)
+                self.var_minutos.set(m_val)
+
                 try:
                     self.var_nota.set(float(jogo["Nota"]))
                 except:
@@ -411,21 +508,65 @@ class App:
 
     def _abrir_janela_filtro(self):
         top = tk.Toplevel(self.root)
-        top.title("Filtrar")
-        centralizar_janela(top, 300, 150)
-        tk.Label(top, text="Buscar por Título:").pack(pady=5)
-        entry = tk.Entry(top)
-        entry.pack(pady=5)
+        top.title("Busca Avançada")
+        centralizar_janela(top, 350, 300)
+        top.configure(padx=15, pady=15)
+
+        tk.Label(top, text="Título:").pack(anchor="w")
+        ent_titulo = tk.Entry(top)
+        ent_titulo.pack(fill="x", pady=(0, 10))
+
+        tk.Label(top, text="Gênero:").pack(anchor="w")
+        cb_gen = ttk.Combobox(top, values=[""] + GENEROS, state="readonly")
+        cb_gen.pack(fill="x", pady=(0, 10))
+
+        tk.Label(top, text="Plataforma:").pack(anchor="w")
+        cb_plat = ttk.Combobox(top, values=[""] + PLATAFORMAS, state="readonly")
+        cb_plat.pack(fill="x", pady=(0, 10))
+
+        tk.Label(top, text="Estado:").pack(anchor="w")
+        cb_est = ttk.Combobox(
+            top,
+            values=["", "História", "100%", "Platina", "Planejo Jogar", "Desistência"],
+            state="readonly",
+        )
+        cb_est.pack(fill="x", pady=(0, 15))
 
         def aplicar():
-            termo = entry.get().lower()
-            self.jogos_visualizados = [
-                j for j in self.lista_jogos if termo in j["Título"].lower()
-            ]
+            f_titulo = ent_titulo.get().lower()
+            f_genero = cb_gen.get()
+            f_plat = cb_plat.get()
+            f_estado = cb_est.get()
+
+            resultado = []
+            for j in self.lista_jogos:
+                match = True
+                if f_titulo and f_titulo not in j["Título"].lower():
+                    match = False
+                if f_genero and f_genero != j["Gênero"]:
+                    match = False
+                if f_plat and f_plat != j["Plataforma"]:
+                    match = False
+                if f_estado and f_estado != j["Forma de Zeramento"]:
+                    match = False
+
+                if match:
+                    resultado.append(j)
+
+            self.jogos_visualizados = resultado
             self.atualizar_lista_visual()
             top.destroy()
 
-        tk.Button(top, text="Filtrar", command=aplicar).pack(pady=10)
+        btn_aplicar = tk.Button(
+            top,
+            text="Aplicar Filtros",
+            command=aplicar,
+            bg="#4a90e2",
+            fg="white",
+            font=("Arial", 10, "bold"),
+            relief="flat",
+        )
+        btn_aplicar.pack(fill="x", pady=5)
 
     def _limpar_filtros(self):
         self.jogos_visualizados = self.lista_jogos.copy()
@@ -433,11 +574,19 @@ class App:
 
     def _atualizar_campos_estado(self, event=None):
         if self.var_forma.get() in ["Planejo Jogar", "Desistência"]:
-            self.var_tempo.set("")
+            self.var_horas.set("0")
+            self.var_minutos.set("00")
+            self.spin_horas.config(state="disabled")
+            self.spin_minutos.config(state="disabled")
+
             self.var_data.set("")
             self.slider_nota.config(state="disabled")
         else:
+            self.spin_horas.config(state="normal")
+            self.spin_minutos.config(state="normal")
             self.slider_nota.config(state="normal")
+            if not self.var_data.get():
+                self.var_data.set(datetime.now().strftime("%d/%m/%Y"))
 
     def _formatar_data(self, *args):
         t = "".join(filter(str.isdigit, self.var_data.get()))
@@ -451,53 +600,46 @@ class App:
         if self.var_data.get() != novo:
             self.var_data.set(novo)
 
-    def _formatar_tempo(self, *args):
-        t = "".join(filter(str.isdigit, self.var_tempo.get()))
-        novo = t
-        if len(t) > 2:
-            novo = f"{t[:2]}:{t[2:4]}"
-        if len(novo) > 5:
-            novo = novo[:5]
-        if self.var_tempo.get() != novo:
-            self.var_tempo.set(novo)
-
     def _limpar_campos(self):
         self.var_titulo.set("")
         self.var_genero.set("")
         self.var_plataforma.set("")
         self.var_desc.set("")
-        self.var_tempo.set("")
+
+        self.var_horas.set("0")
+        self.var_minutos.set("00")
+
         self.var_data.set("")
         self.var_nota.set(1)
 
     def _exportar(self, tipo):
         c = filedialog.asksaveasfilename(defaultextension=f".{tipo}")
-        if not c:
-            return
-        if (
-            Exportador.exportar_pdf(self.lista_jogos, c)
-            if tipo == "pdf"
-            else Exportador.exportar_excel(self.lista_jogos, c)
-        ):
-            messagebox.showinfo("Sucesso", "Exportação concluída!")
+        if c:
+            if tipo == "pdf":
+                Exportador.exportar_pdf(self.lista_jogos, c)
+            else:
+                Exportador.exportar_excel(self.lista_jogos, c)
+            messagebox.showinfo("Sucesso", "Exportado!")
 
     def _importar_excel(self):
         c = filedialog.askopenfilename()
-        if not c:
-            return
-        n = Exportador.importar_excel(c)
-        if n:
-            self.lista_jogos.extend(n)
-            self._limpar_filtros()
-            messagebox.showinfo("Sucesso", f"{len(n)} jogos importados!")
+        if c:
+            n = Exportador.importar_excel(c)
+            if n:
+                self.lista_jogos.extend(n)
+                self._limpar_filtros()
+                messagebox.showinfo("Sucesso", "Importado!")
 
     def _resetar_dados(self):
-        if messagebox.askyesno("Cuidado", "Isso apagará TUDO. Continuar?"):
+        if messagebox.askyesno("Cuidado", "Apagar TUDO?"):
             self.dados.resetar_tudo()
             self.lista_jogos = []
             self._limpar_filtros()
 
     def ao_fechar(self):
-        if messagebox.askyesno("Sair", "Deseja salvar antes de sair?"):
+        if messagebox.askyesno("Sair", "Salvar antes de sair?"):
             self.dados.salvar_jogos(self.lista_jogos)
+
+        self.root.quit()
         self.root.destroy()
+        sys.exit()

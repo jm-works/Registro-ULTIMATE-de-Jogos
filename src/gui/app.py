@@ -203,6 +203,7 @@ class App:
             height=1,
         )
         btn_lupa.pack(side="left", padx=(3, 0))
+        # --------------------------------------------------------
 
         tk.Label(self.root, text="Plataforma*:").grid(
             row=2, column=0, sticky="w", padx=10, pady=3
@@ -249,6 +250,7 @@ class App:
 
         self._criar_campo(5, "Descrição:", self.var_desc)
 
+        # --- CAMPO DE TEMPO (Spinboxes) ---
         tk.Label(self.root, text="Tempo Jogado:").grid(
             row=6, column=0, sticky="w", padx=10, pady=3
         )
@@ -287,6 +289,7 @@ class App:
         )
         self.spin_minutos.pack(side="left")
         tk.Label(frame_tempo, text="m").pack(side="left")
+        # ----------------------------------
 
         tk.Label(self.root, text="Nota (1-10):").grid(
             row=7, column=0, sticky="w", padx=10, pady=3
@@ -325,7 +328,7 @@ class App:
 
     def _abrir_seletor_genero(self):
         def callback(selecionado):
-            # Destrava temporariamente para inserir o texto
+            # Destrava momentaneamente para mudar o texto
             self.entry_gen.config(state="normal")
             self.var_genero.set(selecionado)
             self.entry_gen.config(state="readonly")
@@ -347,6 +350,9 @@ class App:
         if not valor.isdigit():
             return False
         return int(valor) <= 59
+
+    def _filtrar_generos(self, event):
+        pass
 
     def adicionar_jogo(self):
         tempo_str = ""
@@ -504,6 +510,7 @@ class App:
                 self.entry_gen.config(state="normal")
                 self.var_genero.set(jogo["Gênero"])
                 self.entry_gen.config(state="readonly")
+
                 self.var_plataforma.set(jogo["Plataforma"])
                 self.var_data.set(jogo.get("Data de Zeramento", ""))
                 self.var_forma.set(jogo["Forma de Zeramento"])
@@ -604,6 +611,7 @@ class App:
             self.var_minutos.set("00")
             self.spin_horas.config(state="disabled")
             self.spin_minutos.config(state="disabled")
+
             self.var_data.set("")
             self.slider_nota.config(state="disabled")
         else:
@@ -627,6 +635,7 @@ class App:
 
     def _limpar_campos(self):
         self.var_titulo.set("")
+
         self.entry_gen.config(state="normal")
         self.var_genero.set("")
         self.entry_gen.config(state="readonly")
@@ -670,4 +679,4 @@ class App:
 
         self.root.quit()
         self.root.destroy()
-        sys.exit()
+        os._exit(0)

@@ -81,6 +81,7 @@ class JanelaSeletorGenero:
         self.lista_completa = GENEROS
 
         self._criar_ui()
+
         self.top.transient(parent)
         self.top.grab_set()
         self.top.focus_set()

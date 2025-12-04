@@ -6,6 +6,7 @@ import os
 import re
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 import webbrowser
 import urllib.parse
 import pyperclip
@@ -1046,8 +1047,10 @@ class JanelaResumo:
         sizes = list(status_counts.values())
         colors = ["#4a90e2", "#2ecc71", "#f1c40f", "#e74c3c", "#95a5a6"]
 
-        fig, ax = plt.subplots(figsize=(4, 3), dpi=100)
+        fig = Figure(figsize=(4, 3), dpi=100)
         fig.patch.set_facecolor(self.card_bg)
+
+        ax = fig.add_subplot(111)
         ax.set_facecolor(self.card_bg)
 
         wedges, texts, autotexts = ax.pie(

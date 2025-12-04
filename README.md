@@ -17,24 +17,39 @@ Este programa tem como propósito catalogar jogos finalizados, inspirado na plan
 
 ## 🛠 Instalação
 ### Requisitos
-Para rodar o software, é necessário ter **Python 3.13.x** instalado e as seguintes bibliotecas:
-```sh
-pip install pandas numpy openpyxl reportlab matplotlib pyperclip Pillow
-```
+Para rodar o software, é necessário ter **Python 3.13+** instalado.
+
+> **Nota para usuários Linux:** Certifique-se de ter o `tkinter` instalado. Em sistemas Debian/Ubuntu, use: `sudo apt-get install python3-tk`.
+
+### Instalando Dependências
+Recomendamos o uso de um ambiente virtual para manter seu sistema organizado.
+
+1. **Clone o repositório:**
+   git clone https://github.com/jm-works/Registro-ULTIMATE-de-Jogos.git
+
+2. **Acesse o diretório do projeto:**
+   cd Registro-ULTIMATE-de-Jogos
+
+3. **Crie e ative o ambiente virtual (Opcional, mas recomendado):**
+   - **Windows:**
+     python -m venv .venv
+     .venv\Scripts\activate
+   - **Linux/Mac:**
+     python3 -m venv .venv
+     source .venv/bin/activate
+
+4. **Instale as bibliotecas:**
+   
+   **Opção A (Padrão com pip):**
+   pip install pandas numpy openpyxl reportlab matplotlib pyperclip Pillow
+   
+   **Opção B (Se você usa uv):**
+   Como o projeto já possui um arquivo `uv.lock`, você pode instalar tudo rapidamente com:
+   uv sync
 
 ### Como Executar
-1. Clone o repositório:
-   ```sh
-   git clone https://github.com/jm-works/Registro-ULTIMATE-de-Jogos.git
-   ```
-2. Acesse o diretório do projeto:
-   ```sh
-   cd Registro-ULTIMATE-de-Jogos
-   ```
-3. Execute o programa:
-   ```sh
-   python main.py
-   ```
+Com as dependências instaladas, inicie o programa:
+python main.py
 
 ---
 
@@ -68,7 +83,7 @@ O programa possui uma interface intuitiva, inspirada em menus clássicos de comp
 ## 🏆 Como Usar
 
 ### Brinque um pouco
-- A lista já vem pré-configurada com alguns jogos, aproveite para testar as funções até se sentir satisfeito em criar a sua propria lista.
+- A lista já vem pré-configurada com alguns jogos, aproveite para testar as funções até se sentir satisfeito em criar a sua própria lista.
 
 ### Dê um reset na lista
 1. Na aba superior, clique em **"Arquivo"** e selecione **"Resetar todas as listas"**.
@@ -83,8 +98,8 @@ O programa possui uma interface intuitiva, inspirada em menus clássicos de comp
 - Para excluir, use o menu rápido com o botão direito em cima do jogo e clique em **"Excluir"**.
 
 ### Exportação e Importação de Dados
-- Usa a aba superior **"Arquivo"** e clique em **Exportar** para PDF, Excel ou JSON.
-- Usa a aba superior **"Arquivo"** e clique em **Importar** para Excel ou JSON.
+- Use a aba superior **"Arquivo"** e clique em **Exportar** para PDF, Excel ou JSON.
+- Use a aba superior **"Arquivo"** e clique em **Importar** para Excel ou JSON.
 
 ### Filtrando e Limpando Filtros
 

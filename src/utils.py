@@ -1,9 +1,13 @@
 import re
+import tkinter as tk
 from datetime import datetime
+from typing import Optional, Union
 from src.constantes import GENEROS
 
 
-def centralizar_janela(janela, largura, altura):
+def centralizar_janela(
+    janela: Union[tk.Tk, tk.Toplevel], largura: int, altura: int
+) -> None:
     janela.update_idletasks()
     largura_tela = janela.winfo_screenwidth()
     altura_tela = janela.winfo_screenheight()
@@ -13,9 +17,14 @@ def centralizar_janela(janela, largura, altura):
 
 
 def validar_campos(
-    titulo, genero, plataforma, data_zeramento, tempo_jogado, nota, estado
-):
-    """Verifica se os dados inseridos no formulário são válidos."""
+    titulo: str,
+    genero: str,
+    plataforma: str,
+    data_zeramento: str,
+    tempo_jogado: str,
+    nota: Union[str, float, int],
+    estado: str,
+) -> Optional[str]:
     if not titulo.strip():
         return "O campo 'Título' é obrigatório! Não deixe seu jogo sem nome."
     if not genero.strip():
@@ -26,7 +35,6 @@ def validar_campos(
         return "O campo 'Plataforma' é obrigatório! Onde você jogou?"
     if not estado.strip():
         return "O campo 'Forma de Zeramento' é obrigatório!"
-
     if estado not in ["Planejo Jogar", "Desistência"]:
         if not re.match(r"^\d{2}/\d{2}/\d{4}$", data_zeramento):
             return "A data de zeramento deve estar no formato DIA/MÊS/ANO."
@@ -34,9 +42,10 @@ def validar_campos(
             datetime.strptime(data_zeramento, "%d/%m/%Y")
         except ValueError:
             return "A data de zeramento não é válida!"
+
         tempo_limpo = tempo_jogado.replace(" ", "").lower()
         if not re.match(r"^(\d+h\d{2}m)$", tempo_limpo):
-            return "O tempo jogado está com formato inválido."
+            return "O tempo jogado está com formato inválido (ex: 10h 30m)."
 
     if nota:
         try:
@@ -49,7 +58,7 @@ def validar_campos(
     return None
 
 
-def calcular_total_minutos(tempo_jogado):
+def calcular_total_minutos(tempo_jogado: str) -> int:
     if not tempo_jogado:
         return 0
     t = tempo_jogado.lower().replace(" ", "")

@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import shutil
 from datetime import datetime
 from src.constantes import SAVES_DIR
 
@@ -12,8 +13,23 @@ class GerenciadorDados:
 
         os.makedirs(SAVES_DIR, exist_ok=True)
 
-    def carregar_jogos(self):
-        """Carrega a lista de jogos, ordenando por data os que já foram zerados."""
+    def _salvar_arquivo_seguro(self, caminho: str, dados: list) -> bool:
+        temp_file = f"{caminho}.tmp"
+        try:
+            with open(temp_file, "w", encoding="utf-8") as arquivo:
+                json.dump(dados, arquivo, indent=4, ensure_ascii=False)
+                arquivo.flush()
+                os.fsync(arquivo.fileno())
+
+            os.replace(temp_file, caminho)
+            return True
+        except Exception as e:
+            print(f"Erro ao salvar em {caminho}: {e}")
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+            return False
+
+    def carregar_jogos(self) -> list:
         try:
             with open(self.arquivo_jogos, "r", encoding="utf-8") as arquivo:
                 lista_jogos = json.load(arquivo)
@@ -42,30 +58,18 @@ class GerenciadorDados:
         except (FileNotFoundError, json.JSONDecodeError):
             return []
 
-    def salvar_jogos(self, lista_jogos):
-        try:
-            with open(self.arquivo_jogos, "w", encoding="utf-8") as arquivo:
-                json.dump(lista_jogos, arquivo, indent=4, ensure_ascii=False)
-            return True
-        except Exception as e:
-            print(f"Erro ao salvar jogos: {e}")
-            return False
+    def salvar_jogos(self, lista_jogos: list) -> bool:
+        return self._salvar_arquivo_seguro(self.arquivo_jogos, lista_jogos)
 
-    def carregar_tarefas(self):
+    def carregar_tarefas(self) -> list:
         try:
             with open(self.arquivo_tarefas, "r", encoding="utf-8") as arquivo:
                 return json.load(arquivo)
         except (FileNotFoundError, json.JSONDecodeError):
             return []
 
-    def salvar_tarefas(self, tarefas):
-        try:
-            with open(self.arquivo_tarefas, "w", encoding="utf-8") as arquivo:
-                json.dump(tarefas, arquivo, indent=4, ensure_ascii=False)
-            return True
-        except Exception as e:
-            print(f"Erro ao salvar tarefas: {e}")
-            return False
+    def salvar_tarefas(self, tarefas: list) -> bool:
+        return self._salvar_arquivo_seguro(self.arquivo_tarefas, tarefas)
 
     def resetar_tudo(self):
         if os.path.exists(self.arquivo_jogos):

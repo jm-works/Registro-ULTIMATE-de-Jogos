@@ -41,11 +41,15 @@ Recomendamos o uso de um ambiente virtual para manter seu sistema organizado.
 4. **Instale as bibliotecas:**
    
    **Opção A (Padrão com pip):**
+   ```sh
    pip install pandas numpy openpyxl reportlab matplotlib pyperclip Pillow
+   ```
    
    **Opção B (Se você usa uv):**
    Como o projeto já possui um arquivo `uv.lock`, você pode instalar tudo rapidamente com:
+   ```sh
    uv sync
+   ```
 
 ### Como Executar
 Com as dependências instaladas, inicie o programa:

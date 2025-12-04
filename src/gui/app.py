@@ -29,7 +29,22 @@ from src.gui.janelas import (
     JanelaSeletorGenero,
     JanelaSeletorPlataforma,
     JanelaDetalhes,
+    JanelaEditorDescricao,
 )
+
+# Definição da Escala estilo MyAnimeList
+ESCALA_NOTAS = [
+    "10 - Obra-prima",
+    "9 - Incrível",
+    "8 - Muito Bom",
+    "7 - Bom",
+    "6 - Razoável",
+    "5 - Médio",
+    "4 - Ruim",
+    "3 - Muito Ruim",
+    "2 - Horrível",
+    "1 - Pavoroso",
+]
 
 
 class App:
@@ -63,11 +78,12 @@ class App:
         self.var_data = tk.StringVar()
         self.var_forma = tk.StringVar()
         self.var_desc = tk.StringVar()
+        self.var_desc.trace("w", self._atualizar_botao_desc)
 
         self.var_horas = tk.StringVar(value="0")
         self.var_minutos = tk.StringVar(value="00")
 
-        self.var_nota = tk.DoubleVar(value=1.0)
+        self.var_nota = tk.StringVar()
         self.var_busca = tk.StringVar()
 
     def _carregar_assets(self):
@@ -269,9 +285,22 @@ class App:
         cb_forma.grid(row=4, column=1, sticky="w", padx=10)
         cb_forma.bind("<<ComboboxSelected>>", self._atualizar_campos_estado)
 
-        self._criar_campo(5, "Descrição:", self.var_desc)
+        tk.Label(self.root, text="Descrição:").grid(
+            row=5, column=0, sticky="w", padx=10, pady=3
+        )
+        self.btn_editor = tk.Button(
+            self.root,
+            text="📝 Abrir Editor / Notas",
+            command=self._abrir_editor_descricao,
+            cursor="hand2",
+            bg="#3498db",
+            fg="white",
+            font=("Arial", 9, "bold"),
+            relief="raised",
+            width=25,
+        )
+        self.btn_editor.grid(row=5, column=1, sticky="w", padx=10)
 
-        # --- CAMPO DE TEMPO (Spinboxes) ---
         tk.Label(self.root, text="Tempo Jogado:").grid(
             row=6, column=0, sticky="w", padx=10, pady=3
         )
@@ -310,15 +339,19 @@ class App:
         )
         self.spin_minutos.pack(side="left")
         tk.Label(frame_tempo, text="m").pack(side="left")
-        # ----------------------------------
 
-        tk.Label(self.root, text="Nota (1-10):").grid(
+        tk.Label(self.root, text="Nota:").grid(
             row=7, column=0, sticky="w", padx=10, pady=3
         )
-        self.slider_nota = tk.Scale(
-            self.root, from_=1, to=10, orient=tk.HORIZONTAL, variable=self.var_nota
+
+        self.cb_nota = ttk.Combobox(
+            self.root,
+            textvariable=self.var_nota,
+            values=ESCALA_NOTAS,
+            state="readonly",
+            width=22,
         )
-        self.slider_nota.grid(row=7, column=1, sticky="ew", padx=10)
+        self.cb_nota.grid(row=7, column=1, sticky="w", padx=10)
 
         btn_add = tk.Button(
             self.root, text="Adicionar Jogo", command=self.adicionar_jogo
@@ -363,6 +396,21 @@ class App:
 
         JanelaSeletorPlataforma(self.root, callback)
 
+    def _abrir_editor_descricao(self):
+        def callback(texto):
+            self.var_desc.set(texto)
+
+        JanelaEditorDescricao(self.root, self.var_desc.get(), callback)
+
+    def _atualizar_botao_desc(self, *args):
+        texto = self.var_desc.get().strip()
+        if texto:
+            self.btn_editor.config(
+                text="📝 Editar Descrição (Preenchido)", bg="#27AE60"
+            )
+        else:
+            self.btn_editor.config(text="📝 Abrir Editor / Notas", bg="#3498db")
+
     def _validar_input_horas(self, valor):
         if valor == "":
             return True
@@ -393,13 +441,19 @@ class App:
                 m = "00"
             tempo_str = f"{h}h {m.zfill(2)}m"
 
+        nota_str = self.var_nota.get()
+        nota_salvar = ""
+        if nota_str:
+            parts = nota_str.split(" - ")
+            if len(parts) > 0:
+                nota_salvar = parts[0]
         erro = validar_campos(
             self.var_titulo.get(),
             self.var_genero.get(),
             self.var_plataforma.get(),
             self.var_data.get(),
             tempo_str,
-            self.var_nota.get(),
+            nota_salvar if nota_salvar else 0,
             self.var_forma.get(),
         )
         if erro:
@@ -419,7 +473,7 @@ class App:
             "Descrição de Zeramento": self.var_desc.get(),
             "Tempo Jogado": tempo_str,
             "Nota": (
-                self.var_nota.get()
+                nota_salvar
                 if self.var_forma.get() not in ["Planejo Jogar", "Desistência"]
                 else ""
             ),
@@ -467,7 +521,6 @@ class App:
 
             m = Menu(self.root, tearoff=0)
 
-            # Adicionado opção para Ver Detalhes
             m.add_command(
                 label="📜 Ver Detalhes", command=lambda: self.mostrar_info_jogo(None)
             )
@@ -580,10 +633,25 @@ class App:
                 self.var_horas.set(h_val)
                 self.var_minutos.set(m_val)
 
-                try:
-                    self.var_nota.set(float(jogo["Nota"]))
-                except:
-                    self.var_nota.set(1)
+                nota_salva = str(jogo.get("Nota", "")).replace(".0", "")
+                valor_combo = ""
+                if nota_salva:
+                    for item in ESCALA_NOTAS:
+                        if item.startswith(f"{nota_salva} -"):
+                            valor_combo = item
+                            break
+                    if not valor_combo:
+                        try:
+                            nota_int = int(float(nota_salva))
+                            for item in ESCALA_NOTAS:
+                                if item.startswith(f"{nota_int} -"):
+                                    valor_combo = item
+                                    break
+                        except:
+                            pass
+
+                self.var_nota.set(valor_combo)
+
                 self._atualizar_campos_estado()
                 self.lista_jogos.remove(jogo)
                 self._limpar_filtros()
@@ -662,11 +730,11 @@ class App:
             self.spin_minutos.config(state="disabled")
 
             self.var_data.set("")
-            self.slider_nota.config(state="disabled")
+            self.cb_nota.config(state="disabled")
         else:
             self.spin_horas.config(state="normal")
             self.spin_minutos.config(state="normal")
-            self.slider_nota.config(state="normal")
+            self.cb_nota.config(state="readonly")
             if not self.var_data.get():
                 self.var_data.set(datetime.now().strftime("%d/%m/%Y"))
 
@@ -699,7 +767,7 @@ class App:
         self.var_minutos.set("00")
 
         self.var_data.set("")
-        self.var_nota.set(1)
+        self.var_nota.set("")
 
     def _exportar(self, tipo):
         c = filedialog.asksaveasfilename(defaultextension=f".{tipo}")

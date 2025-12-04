@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox, filedialog, Menu
 from tkinter import font as tkFont
 from PIL import Image, ImageTk
 import os
+import re
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import webbrowser
@@ -71,12 +72,172 @@ class ScrollableFrame(tk.Frame):
             pass
 
 
+class JanelaEditorDescricao:
+    def __init__(self, parent, texto_atual, callback_salvar, limite_chars=2000):
+        self.top = tk.Toplevel(parent)
+        self.top.title("Editor de Descrição")
+        self.top.geometry("600x500")
+        centralizar_janela(self.top, 600, 550)
+        self.top.configure(bg="#1e1e1e")
+        self.top.resizable(False, False)
+
+        self.callback = callback_salvar
+        self.limite = limite_chars
+        self.texto_inicial = texto_atual
+
+        self._criar_ui()
+
+        self.top.transient(parent)
+        self.top.grab_set()
+        self.text_area.focus_set()
+
+    def _criar_ui(self):
+        frame_toolbar = tk.Frame(self.top, bg="#2d2d2d", pady=5)
+        frame_toolbar.pack(fill="x")
+
+        btn_bold = tk.Button(
+            frame_toolbar,
+            text="N",
+            font=("Arial", 10, "bold"),
+            width=3,
+            bg="#333",
+            fg="white",
+            relief="raised",
+            command=lambda: self._inserir_tag("**"),
+        )
+        btn_bold.pack(side="left", padx=(10, 5))
+
+        btn_italic = tk.Button(
+            frame_toolbar,
+            text="I",
+            font=("Arial", 10, "italic"),
+            width=3,
+            bg="#333",
+            fg="white",
+            relief="raised",
+            command=lambda: self._inserir_tag("*"),
+        )
+        btn_italic.pack(side="left", padx=5)
+
+        tk.Label(
+            frame_toolbar,
+            text="| Use Markdown: **negrito**, *itálico*",
+            bg="#2d2d2d",
+            fg="#aaaaaa",
+            font=("Arial", 9),
+        ).pack(side="left", padx=10)
+
+        frame_text = tk.Frame(self.top, bg="#1e1e1e", padx=10, pady=5)
+        frame_text.pack(fill="both", expand=True)
+
+        self.text_area = tk.Text(
+            frame_text,
+            bg="#2d2d2d",
+            fg="#eeeeee",
+            font=("Arial", 11),
+            wrap="word",
+            bd=0,
+            highlightthickness=1,
+            highlightbackground="#4a90e2",
+            insertbackground="white",
+            padx=10,
+            pady=10,
+        )
+        self.text_area.pack(side="left", fill="both", expand=True)
+        self.text_area.insert("1.0", self.texto_inicial)
+
+        sb = tk.Scrollbar(frame_text, command=self.text_area.yview)
+        sb.pack(side="right", fill="y")
+        self.text_area.config(yscrollcommand=sb.set)
+
+        self.text_area.bind("<KeyRelease>", self._atualizar_contador)
+        self.text_area.bind("<KeyPress>", self._verificar_limite)
+        self.text_area.bind("<<Paste>>", self._ao_colar)
+
+        frame_footer = tk.Frame(self.top, bg="#1e1e1e", pady=10)
+        frame_footer.pack(fill="x", padx=10)
+
+        self.lbl_contador = tk.Label(
+            frame_footer,
+            text=f"0 / {self.limite}",
+            bg="#1e1e1e",
+            fg="#aaaaaa",
+            font=("Arial", 9),
+        )
+        self.lbl_contador.pack(side="left", pady=5)
+
+        btn_salvar = tk.Button(
+            frame_footer, text="Salvar Descrição", command=self._salvar
+        )
+        estilizar_botao(btn_salvar, "#27AE60", largura=30, altura=2)
+        btn_salvar.pack(side="right")
+
+        self._atualizar_contador()
+
+    def _inserir_tag(self, tag):
+        conteudo = self.text_area.get("1.0", "end-1c")
+        if len(conteudo) + (len(tag) * 2) > self.limite:
+            messagebox.showwarning("Limite", "Espaço insuficiente para formatar.")
+            return
+
+        try:
+            sel_start = self.text_area.index("sel.first")
+            sel_end = self.text_area.index("sel.last")
+            texto_sel = self.text_area.get(sel_start, sel_end)
+            self.text_area.delete(sel_start, sel_end)
+            self.text_area.insert(sel_start, f"{tag}{texto_sel}{tag}")
+        except tk.TclError:
+            self.text_area.insert(tk.INSERT, f"{tag}texto{tag}")
+        self._atualizar_contador()
+
+    def _verificar_limite(self, event):
+        teclas_permitidas = ["BackSpace", "Delete", "Left", "Right", "Up", "Down"]
+
+        if event.keysym in teclas_permitidas:
+            return
+
+        conteudo = self.text_area.get("1.0", "end-1c")
+        if len(conteudo) >= self.limite:
+            if not (event.state & 4):
+                return "break"
+
+    def _ao_colar(self, event):
+        try:
+            texto_clip = self.top.clipboard_get()
+        except:
+            return "break"
+
+        conteudo_atual = self.text_area.get("1.0", "end-1c")
+        espaco_restante = self.limite - len(conteudo_atual)
+
+        if espaco_restante <= 0:
+            return "break"
+
+        if len(texto_clip) > espaco_restante:
+            self.text_area.insert(tk.INSERT, texto_clip[:espaco_restante])
+            self._atualizar_contador()
+            return "break"
+
+        self.top.after(10, self._atualizar_contador)
+
+    def _atualizar_contador(self, event=None):
+        conteudo = self.text_area.get("1.0", "end-1c")
+        tamanho = len(conteudo)
+        self.lbl_contador.config(text=f"{tamanho} / {self.limite}")
+        self.lbl_contador.config(fg="#e74c3c" if tamanho >= self.limite else "#aaaaaa")
+
+    def _salvar(self):
+        texto = self.text_area.get("1.0", "end-1c").strip()
+        self.callback(texto)
+        self.top.destroy()
+
+
 class JanelaDetalhes:
     def __init__(self, parent, jogo):
         self.top = tk.Toplevel(parent)
         self.top.title(f"Detalhes: {jogo['Título']}")
-        self.top.geometry("500x550")
-        centralizar_janela(self.top, 500, 550)
+        self.top.geometry("600x650")
+        centralizar_janela(self.top, 600, 650)
 
         self.bg_color = "#1e1e1e"
         self.fg_color = "white"
@@ -94,10 +255,10 @@ class JanelaDetalhes:
         lbl_titulo = tk.Label(
             frame_header,
             text=self.jogo["Título"],
-            font=("Arial", 18, "bold"),
+            font=("Arial", 20, "bold"),
             bg=self.bg_color,
             fg=self.accent_color,
-            wraplength=460,
+            wraplength=550,
             justify="center",
         )
         lbl_titulo.pack()
@@ -107,13 +268,13 @@ class JanelaDetalhes:
             tk.Label(
                 frame_header,
                 text=destaque,
-                font=("Arial", 10, "bold"),
+                font=("Arial", 11, "bold"),
                 bg=self.bg_color,
                 fg="#9b59b6",
             ).pack(pady=(5, 0))
 
         frame_info = tk.Frame(self.top, bg=self.bg_color)
-        frame_info.pack(fill="x", padx=30, pady=10)
+        frame_info.pack(fill="x", padx=40, pady=10)
 
         dados = [
             ("Gênero:", self.jogo["Gênero"]),
@@ -133,12 +294,12 @@ class JanelaDetalhes:
                 text=label,
                 font=("Arial", 10, "bold"),
                 bg=self.bg_color,
-                fg="#aaaaaa",
-            ).grid(row=row, column=col, sticky="w", pady=5)
+                fg="#888888",
+            ).grid(row=row, column=col, sticky="w", pady=8)
 
             tk.Label(
-                frame_info, text=valor, font=("Arial", 10), bg=self.bg_color, fg="white"
-            ).grid(row=row, column=col + 1, sticky="w", padx=(5, 20), pady=5)
+                frame_info, text=valor, font=("Arial", 11), bg=self.bg_color, fg="white"
+            ).grid(row=row, column=col + 1, sticky="w", padx=(5, 30), pady=8)
 
         tk.Label(
             self.top,
@@ -151,28 +312,60 @@ class JanelaDetalhes:
         frame_desc = tk.Frame(self.top, bg="#2d2d2d")
         frame_desc.pack(fill="both", expand=True, padx=20, pady=(0, 20))
 
-        txt_desc = tk.Text(
+        self.txt_desc = tk.Text(
             frame_desc,
             bg="#2d2d2d",
             fg="#dddddd",
             font=("Arial", 11),
             wrap="word",
             bd=0,
-            padx=10,
-            pady=10,
+            padx=15,
+            pady=15,
             highlightthickness=0,
         )
-        txt_desc.pack(side="left", fill="both", expand=True)
+        self.txt_desc.pack(side="left", fill="both", expand=True)
 
-        sb = tk.Scrollbar(frame_desc, command=txt_desc.yview)
+        sb = tk.Scrollbar(frame_desc, command=self.txt_desc.yview)
         sb.pack(side="right", fill="y")
-        txt_desc.config(yscrollcommand=sb.set)
+        self.txt_desc.config(yscrollcommand=sb.set)
 
         descricao = self.jogo.get(
             "Descrição de Zeramento", "Nenhuma descrição informada."
         )
-        txt_desc.insert("1.0", descricao)
-        txt_desc.config(state="disabled")
+        self.txt_desc.insert("1.0", descricao)
+
+        self._aplicar_formatacao()
+        self.txt_desc.config(state="disabled")
+
+    def _aplicar_formatacao(self):
+        self.txt_desc.tag_configure("bold", font=("Arial", 11, "bold"))
+        self.txt_desc.tag_configure("italic", font=("Arial", 11, "italic"))
+
+        self._processar_tag(r"\*\*(.*?)\*\*", "bold", 2)
+        self._processar_tag(r"\*(.*?)\*", "italic", 1)
+
+    def _processar_tag(self, regex_pattern, tag_name, marker_len):
+        while True:
+            pos = self.txt_desc.search(
+                regex_pattern, "1.0", stopindex="end", count=tk.IntVar(), regexp=True
+            )
+            if not pos:
+                break
+
+            count_var = tk.IntVar()
+            self.txt_desc.search(
+                regex_pattern, pos, stopindex="end", count=count_var, regexp=True
+            )
+            chars_match = count_var.get()
+            if chars_match == 0:
+                break
+
+            end_pos = f"{pos}+{chars_match}c"
+            full_text = self.txt_desc.get(pos, end_pos)
+            inner_text = full_text[marker_len:-marker_len]
+
+            self.txt_desc.delete(pos, end_pos)
+            self.txt_desc.insert(pos, inner_text, tag_name)
 
 
 class JanelaSeletorGenero:

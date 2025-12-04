@@ -27,6 +27,7 @@ from src.gui.janelas import (
     JanelaResumo,
     JanelaWallpaper,
     JanelaSeletorGenero,
+    JanelaSeletorPlataforma,
 )
 
 
@@ -203,15 +204,34 @@ class App:
             height=1,
         )
         btn_lupa.pack(side="left", padx=(3, 0))
-        # --------------------------------------------------------
 
         tk.Label(self.root, text="Plataforma*:").grid(
             row=2, column=0, sticky="w", padx=10, pady=3
         )
-        cb_plat = ttk.Combobox(
-            self.root, textvariable=self.var_plataforma, values=PLATAFORMAS, width=18
+
+        frame_plataforma = tk.Frame(self.root)
+        frame_plataforma.grid(row=2, column=1, sticky="w", padx=10)
+
+        self.entry_plat = tk.Entry(
+            frame_plataforma,
+            textvariable=self.var_plataforma,
+            width=17,
+            state="readonly",
+            disabledbackground="white",
+            disabledforeground="black",
         )
-        cb_plat.grid(row=2, column=1, sticky="w", padx=10)
+        self.entry_plat.pack(side="left")
+
+        btn_lupa_plat = tk.Button(
+            frame_plataforma,
+            text="🔍",
+            command=self._abrir_seletor_plataforma,
+            cursor="hand2",
+            relief="raised",
+            bg="#e0e0e0",
+            height=1,
+        )
+        btn_lupa_plat.pack(side="left", padx=(3, 0))
 
         tk.Label(self.root, text="Data Zeramento:").grid(
             row=3, column=0, sticky="w", padx=10, pady=3
@@ -328,12 +348,19 @@ class App:
 
     def _abrir_seletor_genero(self):
         def callback(selecionado):
-            # Destrava momentaneamente para mudar o texto
             self.entry_gen.config(state="normal")
             self.var_genero.set(selecionado)
             self.entry_gen.config(state="readonly")
 
         JanelaSeletorGenero(self.root, callback)
+
+    def _abrir_seletor_plataforma(self):
+        def callback(selecionado):
+            self.entry_plat.config(state="normal")
+            self.var_plataforma.set(selecionado)
+            self.entry_plat.config(state="readonly")
+
+        JanelaSeletorPlataforma(self.root, callback)
 
     def _validar_input_horas(self, valor):
         if valor == "":
@@ -511,7 +538,10 @@ class App:
                 self.var_genero.set(jogo["Gênero"])
                 self.entry_gen.config(state="readonly")
 
+                self.entry_plat.config(state="normal")
                 self.var_plataforma.set(jogo["Plataforma"])
+                self.entry_plat.config(state="readonly")
+
                 self.var_data.set(jogo.get("Data de Zeramento", ""))
                 self.var_forma.set(jogo["Forma de Zeramento"])
                 self.var_desc.set(jogo.get("Descrição de Zeramento", ""))
@@ -640,7 +670,10 @@ class App:
         self.var_genero.set("")
         self.entry_gen.config(state="readonly")
 
+        self.entry_plat.config(state="normal")
         self.var_plataforma.set("")
+        self.entry_plat.config(state="readonly")
+
         self.var_desc.set("")
 
         self.var_horas.set("0")

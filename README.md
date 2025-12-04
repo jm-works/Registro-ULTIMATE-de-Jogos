@@ -32,11 +32,15 @@ Recomendamos o uso de um ambiente virtual para manter seu sistema organizado.
 
 3. **Crie e ative o ambiente virtual (Opcional, mas recomendado):**
    - **Windows:**
+   ```sh
      python -m venv .venv
      .venv\Scripts\activate
+   ```
    - **Linux/Mac:**
+   ```sh
      python3 -m venv .venv
      source .venv/bin/activate
+   ```
 
 4. **Instale as bibliotecas:**
    
@@ -53,7 +57,9 @@ Recomendamos o uso de um ambiente virtual para manter seu sistema organizado.
 
 ### Como Executar
 Com as dependências instaladas, inicie o programa:
+```sh
 python main.py
+```
 
 ---
 

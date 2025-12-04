@@ -1,10 +1,13 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
+from tkinter import ttk, messagebox, filedialog, Menu
 from tkinter import font as tkFont
 from PIL import Image, ImageTk
 import os
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import webbrowser
+import urllib.parse
+import pyperclip
 
 from src.utils import centralizar_janela, calcular_total_minutos
 from src.constantes import WALLPAPER_PATH, GENEROS, PLATAFORMAS
@@ -66,6 +69,110 @@ class ScrollableFrame(tk.Frame):
             self.canvas.yview_scroll(delta, "units")
         except tk.TclError:
             pass
+
+
+class JanelaDetalhes:
+    def __init__(self, parent, jogo):
+        self.top = tk.Toplevel(parent)
+        self.top.title(f"Detalhes: {jogo['Título']}")
+        self.top.geometry("500x550")
+        centralizar_janela(self.top, 500, 550)
+
+        self.bg_color = "#1e1e1e"
+        self.fg_color = "white"
+        self.accent_color = "#4a90e2"
+
+        self.top.configure(bg=self.bg_color)
+        self.jogo = jogo
+
+        self._criar_ui()
+
+    def _criar_ui(self):
+        frame_header = tk.Frame(self.top, bg=self.bg_color)
+        frame_header.pack(fill="x", padx=20, pady=20)
+
+        lbl_titulo = tk.Label(
+            frame_header,
+            text=self.jogo["Título"],
+            font=("Arial", 18, "bold"),
+            bg=self.bg_color,
+            fg=self.accent_color,
+            wraplength=460,
+            justify="center",
+        )
+        lbl_titulo.pack()
+
+        destaque = "💎 HIDDEN GEM" if self.jogo.get("Hidden Gem") else ""
+        if destaque:
+            tk.Label(
+                frame_header,
+                text=destaque,
+                font=("Arial", 10, "bold"),
+                bg=self.bg_color,
+                fg="#9b59b6",
+            ).pack(pady=(5, 0))
+
+        frame_info = tk.Frame(self.top, bg=self.bg_color)
+        frame_info.pack(fill="x", padx=30, pady=10)
+
+        dados = [
+            ("Gênero:", self.jogo["Gênero"]),
+            ("Plataforma:", self.jogo["Plataforma"]),
+            ("Estado:", self.jogo["Forma de Zeramento"]),
+            ("Data:", self.jogo.get("Data de Zeramento", "-")),
+            ("Tempo:", self.jogo.get("Tempo Jogado", "-")),
+            ("Nota:", str(self.jogo.get("Nota", "-"))),
+        ]
+
+        for i, (label, valor) in enumerate(dados):
+            row = i // 2
+            col = (i % 2) * 2
+
+            tk.Label(
+                frame_info,
+                text=label,
+                font=("Arial", 10, "bold"),
+                bg=self.bg_color,
+                fg="#aaaaaa",
+            ).grid(row=row, column=col, sticky="w", pady=5)
+
+            tk.Label(
+                frame_info, text=valor, font=("Arial", 10), bg=self.bg_color, fg="white"
+            ).grid(row=row, column=col + 1, sticky="w", padx=(5, 20), pady=5)
+
+        tk.Label(
+            self.top,
+            text="Descrição / Comentários:",
+            font=("Arial", 12, "bold"),
+            bg=self.bg_color,
+            fg="white",
+        ).pack(anchor="w", padx=20, pady=(20, 5))
+
+        frame_desc = tk.Frame(self.top, bg="#2d2d2d")
+        frame_desc.pack(fill="both", expand=True, padx=20, pady=(0, 20))
+
+        txt_desc = tk.Text(
+            frame_desc,
+            bg="#2d2d2d",
+            fg="#dddddd",
+            font=("Arial", 11),
+            wrap="word",
+            bd=0,
+            padx=10,
+            pady=10,
+            highlightthickness=0,
+        )
+        txt_desc.pack(side="left", fill="both", expand=True)
+
+        sb = tk.Scrollbar(frame_desc, command=txt_desc.yview)
+        sb.pack(side="right", fill="y")
+        txt_desc.config(yscrollcommand=sb.set)
+
+        descricao = self.jogo.get(
+            "Descrição de Zeramento", "Nenhuma descrição informada."
+        )
+        txt_desc.insert("1.0", descricao)
+        txt_desc.config(state="disabled")
 
 
 class JanelaSeletorGenero:
@@ -654,15 +761,14 @@ class JanelaResumo:
             calcular_total_minutos(j.get("Tempo Jogado", "0:00")) for j in self.zerados
         )
         self.horas_totais = minutos_totais // 60
+        self.dias_jogados = self.horas_totais / 24
+
         notas = [float(j["Nota"]) for j in self.zerados if j.get("Nota")]
         self.media_notas = sum(notas) / len(notas) if notas else 0.0
         generos = [j["Gênero"] for j in self.zerados]
         self.top_genero = max(set(generos), key=generos.count) if generos else "N/A"
-        self.top_5_jogos = sorted(
-            self.zerados,
-            key=lambda x: float(x["Nota"]) if x.get("Nota") else 0,
-            reverse=True,
-        )[:5]
+
+        self.hidden_gems_list = [j for j in self.jogos if j.get("Hidden Gem")]
 
     def _criar_interface(self):
         lbl_titulo = tk.Label(
@@ -681,7 +787,13 @@ class JanelaResumo:
         frame_cards.pack(fill="x", pady=10)
 
         self._criar_card(frame_cards, "Jogos Zerados", f"{self.total_zerados}", "🏆", 0)
-        self._criar_card(frame_cards, "Tempo Total", f"{self.horas_totais}h", "⏳", 1)
+        self._criar_card(
+            frame_cards,
+            "Tempo Total",
+            f"{self.horas_totais}h ({self.dias_jogados:.1f}d)",
+            "⏳",
+            1,
+        )
         self._criar_card(frame_cards, "Média Notas", f"{self.media_notas:.2f}", "⭐", 2)
         self._criar_card(frame_cards, "Gênero Favorito", f"{self.top_genero}", "🎮", 3)
 
@@ -705,12 +817,12 @@ class JanelaResumo:
 
         tk.Label(
             right_frame,
-            text="Top 5 - Melhores Avaliados",
+            text="💎 Hidden Gems (Destaques)",
             font=("Arial", 12, "bold"),
             bg=self.card_bg,
-            fg=self.text_color,
+            fg="#9b59b6",
         ).pack(pady=5)
-        self._criar_tabela_top5(right_frame)
+        self._criar_tabela_hidden_gems(right_frame)
 
     def _criar_card(self, parent, titulo, valor, icone, col_index):
         card = tk.Frame(parent, bg=self.card_bg, relief="flat", bd=1)
@@ -759,7 +871,28 @@ class JanelaResumo:
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
 
-    def _criar_tabela_top5(self, parent):
+    def _criar_tabela_hidden_gems(self, parent):
+        frame_busca = tk.Frame(parent, bg=self.card_bg)
+        frame_busca.pack(fill="x", pady=(0, 5))
+
+        tk.Label(frame_busca, text="🔍", bg=self.card_bg, fg="#aaaaaa").pack(
+            side="left", padx=(0, 5)
+        )
+
+        self.var_busca_gem = tk.StringVar()
+        self.var_busca_gem.trace("w", self._filtrar_gems)
+
+        entry = tk.Entry(
+            frame_busca,
+            textvariable=self.var_busca_gem,
+            bg="#3d3d3d",
+            fg="white",
+            insertbackground="white",
+            relief="flat",
+            font=("Arial", 10),
+        )
+        entry.pack(side="left", fill="x", expand=True)
+
         style = ttk.Style()
         style.theme_use("clam")
         style.configure(
@@ -774,20 +907,87 @@ class JanelaResumo:
             "Treeview.Heading", background="#444", foreground="white", relief="flat"
         )
 
-        cols = ("Jogo", "Nota", "Plat.")
-        tree = ttk.Treeview(parent, columns=cols, show="headings", height=8)
-        tree.heading("Jogo", text="Nome do Jogo")
-        tree.heading("Nota", text="Nota")
-        tree.heading("Plat.", text="Plataforma")
-        tree.column("Jogo", width=150)
-        tree.column("Nota", width=50, anchor="center")
-        tree.column("Plat.", width=80, anchor="center")
+        cols = ("Jogo", "Gênero", "Plat.")
+        self.tree = ttk.Treeview(parent, columns=cols, show="headings", height=8)
+        self.tree.heading("Jogo", text="Nome do Jogo")
+        self.tree.heading("Gênero", text="Gênero")
+        self.tree.heading("Plat.", text="Plataforma")
+        self.tree.column("Jogo", width=150)
+        self.tree.column("Gênero", width=80, anchor="center")
+        self.tree.column("Plat.", width=80, anchor="center")
 
-        for jogo in self.top_5_jogos:
-            tree.insert(
-                "", "end", values=(jogo["Título"], jogo["Nota"], jogo["Plataforma"])
+        sb = ttk.Scrollbar(parent, orient="vertical", command=self.tree.yview)
+        self.tree.configure(yscrollcommand=sb.set)
+
+        self.tree.pack(side="left", fill="both", expand=True, pady=10)
+        sb.pack(side="right", fill="y", pady=10)
+
+        self.tree.bind("<Button-3>", self._abrir_menu_contexto)
+        self.tree.bind("<Double-Button-1>", self._on_double_click)
+
+        self._atualizar_treeview(self.hidden_gems_list)
+
+    def _filtrar_gems(self, *args):
+        termo = self.var_busca_gem.get().lower()
+        if not termo:
+            filtrados = self.hidden_gems_list
+        else:
+            filtrados = [
+                j
+                for j in self.hidden_gems_list
+                if termo in j["Título"].lower()
+                or termo in j["Gênero"].lower()
+                or termo in j["Plataforma"].lower()
+            ]
+        self._atualizar_treeview(filtrados)
+
+    def _atualizar_treeview(self, lista):
+        self.tree.delete(*self.tree.get_children())
+        for jogo in lista:
+            self.tree.insert(
+                "", "end", values=(jogo["Título"], jogo["Gênero"], jogo["Plataforma"])
             )
-        tree.pack(fill="both", expand=True, pady=10)
+
+    def _on_double_click(self, event):
+        item_id = self.tree.identify_row(event.y)
+        if not item_id:
+            return
+
+        values = self.tree.item(item_id, "values")
+        titulo = values[0]
+        jogo = next((j for j in self.hidden_gems_list if j["Título"] == titulo), None)
+
+        if jogo:
+            JanelaDetalhes(self.top, jogo)
+
+    def _abrir_menu_contexto(self, event):
+        item_id = self.tree.identify_row(event.y)
+        if not item_id:
+            return
+
+        self.tree.selection_set(item_id)
+        values = self.tree.item(item_id, "values")
+        titulo = values[0]
+
+        jogo = next((j for j in self.hidden_gems_list if j["Título"] == titulo), None)
+
+        if not jogo:
+            return
+
+        m = Menu(self.top, tearoff=0)
+        m.add_command(
+            label="📜 Ver Detalhes", command=lambda: JanelaDetalhes(self.top, jogo)
+        )
+        m.add_separator()
+        m.add_command(label="📋 Copiar Nome", command=lambda: pyperclip.copy(titulo))
+        m.add_command(
+            label="🌍 Pesquisar no Google",
+            command=lambda: webbrowser.open(
+                f"https://www.google.com/search?q={urllib.parse.quote(titulo)}"
+            ),
+        )
+
+        m.post(event.x_root, event.y_root)
 
 
 class JanelaWallpaper:

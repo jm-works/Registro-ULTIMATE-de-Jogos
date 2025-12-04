@@ -28,6 +28,7 @@ from src.gui.janelas import (
     JanelaWallpaper,
     JanelaSeletorGenero,
     JanelaSeletorPlataforma,
+    JanelaDetalhes,
 )
 
 
@@ -440,30 +441,38 @@ class App:
                 icone = "❌"
             elif estado == "Platina":
                 icone = "🏆"
-            self.listbox.insert(tk.END, f"{idx}. {icone} {jogo['Título']}")
+
+            destaque = "💎 " if jogo.get("Hidden Gem") else ""
+            self.listbox.insert(tk.END, f"{idx}. {icone} {destaque}{jogo['Título']}")
 
     def mostrar_info_jogo(self, event):
         sel = self.listbox.curselection()
         if not sel:
             return
         jogo = self.jogos_visualizados[sel[0]]
-        msg = (
-            f"Título: {jogo['Título']}\n"
-            f"Gênero: {jogo['Gênero']}\n"
-            f"Plataforma: {jogo['Plataforma']}\n"
-            f"Estado: {jogo['Forma de Zeramento']}\n"
-            f"Data: {jogo.get('Data de Zeramento', '-')}\n"
-            f"Tempo: {jogo.get('Tempo Jogado', 'N/A')}\n"
-            f"Nota: {jogo.get('Nota', 'N/A')}"
-        )
-        messagebox.showinfo("Detalhes", msg)
+        JanelaDetalhes(self.root, jogo)
 
     def _abrir_menu_contexto(self, event):
         try:
             index = self.listbox.nearest(event.y)
             self.listbox.selection_clear(0, tk.END)
             self.listbox.selection_set(index)
+
+            jogo_sel = self.jogos_visualizados[index]
+            texto_gem = (
+                "Remover 'Hidden Gem'"
+                if jogo_sel.get("Hidden Gem")
+                else "Marcar como 'Hidden Gem' 💎"
+            )
+
             m = Menu(self.root, tearoff=0)
+
+            # Adicionado opção para Ver Detalhes
+            m.add_command(
+                label="📜 Ver Detalhes", command=lambda: self.mostrar_info_jogo(None)
+            )
+            m.add_separator()
+
             menu_org = Menu(m, tearoff=0)
             menu_org.add_command(
                 label="Título (A-Z)", command=lambda: self._ordenar("titulo")
@@ -476,6 +485,8 @@ class App:
             )
             m.add_cascade(label="Organizar", menu=menu_org)
             m.add_separator()
+            m.add_command(label=texto_gem, command=self._toggle_hidden_gem)
+            m.add_separator()
             m.add_command(label="Copiar Nome", command=self._copiar_nome)
             m.add_command(label="Google", command=self._pesquisar_google)
             m.add_separator()
@@ -484,6 +495,14 @@ class App:
             m.post(event.x_root, event.y_root)
         except Exception:
             pass
+
+    def _toggle_hidden_gem(self):
+        sel = self.listbox.curselection()
+        if not sel:
+            return
+        jogo = self.jogos_visualizados[sel[0]]
+        jogo["Hidden Gem"] = not jogo.get("Hidden Gem", False)
+        self.atualizar_lista_visual()
 
     def _ordenar(self, criterio):
         if criterio == "titulo":
